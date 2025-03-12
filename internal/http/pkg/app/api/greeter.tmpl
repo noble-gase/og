@@ -1,0 +1,25 @@
+package api
+
+import (
+	"net/http"
+
+	"{{.Module}}/pkg/{{.AppPkg}}/service/greeter"
+	"{{.Module}}/pkg/internal/code"
+	"{{.Module}}/pkg/lib/log"
+
+	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/result"
+	"go.uber.org/zap"
+)
+
+func Hello(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	req := new(greeter.ReqHello)
+	if err := ne.BindJSON(r, req); err != nil {
+		log.Error(ctx, "params invalid", zap.Error(err))
+		result.Err(code.ErrParams, err.Error()).JSON(w, r)
+		return
+	}
+	greeter.Hello(ctx, req).JSON(w, r)
+}

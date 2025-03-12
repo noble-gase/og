@@ -1,0 +1,51 @@
+package middleware
+
+import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	requestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "demo",
+		Subsystem: "api",
+		Name:      "requests_count",
+		Help:      "The total number of http request",
+	}, []string{"method", "path", "status"})
+
+	requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "demo",
+		Subsystem: "api",
+		Name:      "requests_duration",
+		Help:      "The http request latency in seconds",
+	}, []string{"method", "path", "status"})
+)
+
+func init() {
+	prometheus.MustRegister(requestCounter)
+	prometheus.MustRegister(requestDuration)
+}
+
+// Monitor 监控请求次数，时长
+func Monitor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now().Local()
+		requestCounter.With(prometheus.Labels{
+			"method": r.Method,
+			"path":   r.URL.Path,
+		}).Inc()
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		defer func() {
+			requestDuration.With(prometheus.Labels{
+				"method": r.Method,
+				"path":   r.URL.Path,
+				"status": strconv.Itoa(ww.Status()),
+			}).Observe(time.Since(now).Seconds())
+		}()
+		next.ServeHTTP(ww, r)
+	})
+}

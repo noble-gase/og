@@ -1,0 +1,30 @@
+package greeter
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"{{.Module}}/pkg/{{.AppPkg}}/api"
+	"{{.Module}}/pkg/{{.AppPkg}}/config"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestMain(m *testing.M) {
+	// 初始化
+	config.Init(context.Background(), "../config.toml")
+	// 执行测试
+	m.Run()
+	// 关闭资源
+	config.CleanUp()
+}
+
+func Test_Greeter_SayHello(t *testing.T) {
+	svc := New()
+	resp, err := svc.SayHello(context.Background(), &api.HelloRequest{
+		Name: "world",
+	})
+	assert.Nil(t, err)
+	fmt.Println("[resp]", resp.String())
+}

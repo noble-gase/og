@@ -1,0 +1,94 @@
+package cmd
+
+import (
+	"context"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.Module}}/pkg/lib/log"
+	lib_middleware "{{.Module}}/pkg/lib/middleware"
+	"{{.Module}}/pkg/lib/trace"
+	"{{.Module}}/pkg/{{.AppPkg}}/config"
+	"{{.Module}}/pkg/{{.AppPkg}}/router"
+
+	"github.com/go-chi/chi/v5"
+	chi_middleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/cors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+)
+
+var cfgFile string
+
+var root = &cobra.Command{
+	Use:         "{{.Module}}",
+	Short:       "Go App",
+	Long:        "Go App (build with cobra | viper | zap | ent | chi)",
+	Annotations: map[string]string{},
+	Version:     "v1.0.0",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		config.Init(context.Background(), cfgFile)
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		// make sure we have a working tempdir in minimal containers, because:
+		// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
+		if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
+			log.Error(context.Background(), "create temp dir failed", zap.Error(err))
+		}
+		serving(context.Background())
+	},
+}
+
+func serving(ctx context.Context) {
+	// 跨域设置
+	withCors := cors.New(cors.Options{
+		// AllowedOrigins:   []string{"*"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "withCredentials"},
+		ExposedHeaders:   []string{trace.TraceId}, // 服务器暴露一些自定义的头信息，允许客户端访问
+		AllowCredentials: true,
+	})
+	// 创建路由
+	r := chi.NewRouter()
+	r.Use(withCors.Handler, lib_middleware.TraceId, lib_middleware.Recovery)
+	r.Mount("/debug", chi_middleware.Profiler())
+	// 注册路由
+	router.App(r)
+	// 创建服务
+	srv := &http.Server{
+		Addr:         ":" + viper.GetString("app.port"),
+		Handler:      r,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  10 * time.Second,
+	}
+	// 创建一个通道来监听信号
+	quit := make(chan os.Signal, 1)
+	// 监听特定的系统信号
+	signal.Notify(quit, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	// 启动服务
+	go func() {
+		log.Info(ctx, "Serving OK", zap.String("port", srv.Addr))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(context.Background(), "serving error", zap.Error(err))
+		}
+	}()
+	// 处理信号
+	sig := <-quit
+	log.Warn(context.TODO(), "Received Signal", zap.String("signal", sig.String()))
+	// 关闭服务
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error(ctx, "server shutdown failed", zap.Error(err))
+	}
+	// 执行清理操作
+	config.CleanUp()
+	// 退出程序
+	os.Exit(0)
+}

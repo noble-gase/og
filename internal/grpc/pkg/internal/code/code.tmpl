@@ -1,0 +1,12 @@
+package code
+
+import "github.com/noble-gase/ne/codes"
+
+var (
+	ErrParams   = codes.New(10000, "params error")
+	ErrAuth     = codes.New(20000, "unauthenticated")
+	ErrPerm     = codes.New(30000, "permission denied")
+	ErrNotFound = codes.New(40000, "entity not found")
+	ErrSystem   = codes.New(50000, "internal server error")
+	ErrService  = codes.New(60000, "service error")
+)

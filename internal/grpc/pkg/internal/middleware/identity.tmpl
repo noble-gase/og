@@ -1,0 +1,13 @@
+package middleware
+
+import (
+	"context"
+
+	"{{.Module}}/pkg/internal/identity"
+
+	"google.golang.org/grpc"
+)
+
+func Identity(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return handler(identity.NewContext(ctx), req)
+}

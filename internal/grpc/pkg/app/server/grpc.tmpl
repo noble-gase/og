@@ -1,0 +1,51 @@
+package server
+
+import (
+	"context"
+	"net"
+
+	"{{.Module}}/pkg/{{.AppPkg}}/api"
+	"{{.Module}}/pkg/{{.AppPkg}}/service/greeter"
+	"{{.Module}}/pkg/lib/log"
+	internal_middleware "{{.Module}}/pkg/internal/middleware"
+	lib_middleware "{{.Module}}/pkg/lib/middleware"
+
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+)
+
+func NewGrpcServer(ctx context.Context) *grpc.Server {
+	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		lib_middleware.TraceId,
+		lib_middleware.Recovery,
+		lib_middleware.Log,
+		internal_middleware.Validator,
+	))
+	// 服务注册
+	registerGrpc(srv)
+	return srv
+}
+
+func ServeGrpc(ctx context.Context, srv *grpc.Server) {
+	addr := ":" + viper.GetString("port.grpc")
+	// Create a listener on TCP port
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatal(ctx, "net.Listen failed", zap.Error(err))
+	}
+	// Serve gRPC server
+	log.Info(ctx, "Serving gRPC OK", zap.String("port", addr))
+	if err := srv.Serve(lis); err != nil {
+		log.Fatal(ctx, "grpc serve failed", zap.Error(err))
+	}
+}
+
+// 服务注册
+func registerGrpc(s *grpc.Server) {
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
+	api.RegisterGreeterServiceServer(s, greeter.New())
+}
+
