@@ -2,7 +2,7 @@
 
 [![golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 [![pkg.go.dev](https://img.shields.io/badge/dev-reference-007d9c?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/noble-gase/og)
-[![Apache 2.0 license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+[![MIT](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 [鿫-Og] Go开发脚手架
 
