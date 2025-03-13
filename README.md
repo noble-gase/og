@@ -14,7 +14,7 @@
 go install github.com/noble-gase/og/cmd/og@latest
 ```
 
-进一步了解 👉 [详情](https://github.com/noble-gase/og/src/main/cmd/og/README.md)
+进一步了解 👉 [详情](https://github.com/noble-gase/og/blob/main/cmd/og/README.md)
 
 ## protoc-gen-og
 
@@ -24,7 +24,7 @@ go install github.com/noble-gase/og/cmd/og@latest
 go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
 ```
 
-进一步了解 👉 [详情](https://github.com/noble-gase/og/src/main/cmd/protoc-gen-og/README.md)
+进一步了解 👉 [详情](https://github.com/noble-gase/og/blob/main/cmd/protoc-gen-og/README.md)
 
 ## gg
 
@@ -34,6 +34,6 @@ go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
 go install github.com/noble-gase/og/cmd/gg@latest
 ```
 
-进一步了解 👉 [详情](https://github.com/noble-gase/og/src/main/cmd/gg/README.md)
+进一步了解 👉 [详情](https://github.com/noble-gase/og/blob/main/cmd/gg/README.md)
 
 **Enjoy 😊**
