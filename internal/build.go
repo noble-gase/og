@@ -197,7 +197,7 @@ func genOutput(root, path, appName string) string {
 	// 文件名称
 	switch ext := filepath.Ext(path); ext {
 	case ".tmpl":
-		builder.WriteString(name[:len(name)-6])
+		builder.WriteString(name[:len(name)-5])
 		builder.WriteString(".go")
 	case "":
 		if strings.Contains(name, "ignore") {
