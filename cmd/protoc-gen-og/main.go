@@ -263,31 +263,36 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		if !ok || rule == nil {
 			continue
 		}
+
 		method, path := getHttpRouter(rule)
 		isGetMethod := false
 		if strings.ToUpper(method) == http.MethodGet {
 			isGetMethod = true
 		}
+
 		gf.P()
 		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
 		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protosPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
 		if isGetMethod {
-			gf.P("query := ", protosPkg.Ident("MessageToQuery"), "(in)")
-		}
-		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
-		gf.P("req := c.client.R().")
-		gf.P("SetContext(ctx).")
-		if isGetMethod {
-			gf.P("SetQueryParamsFromValues(query).")
+			gf.P("req := c.client.R().SetContext(ctx).SetQueryParamsFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
 		} else {
-			gf.P("SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").")
-			gf.P("SetBody(in).")
+			gf.P("req := c.client.R().SetContext(ctx)")
 		}
-		gf.P("SetResult(ret)")
 		gf.P("for _, f := range opts {")
 		gf.P("f(req)")
 		gf.P("}")
-		gf.P("if _, err := req.", method, `("`, path, `"); err != nil {`)
+		if !isGetMethod {
+			gf.P("// set request body")
+			gf.P("switch ", contribPkg.Ident("ContentType"), "(req.Header) {")
+			gf.P("case ", contribPkg.Ident("ContentForm"), ",", contribPkg.Ident("ContentMultipartForm"), ":")
+			gf.P("req.SetFormDataFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
+			gf.P("default:")
+			gf.P("req.SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").SetBody(in)")
+			gf.P("}")
+		}
+		gf.P("// send request")
+		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
+		gf.P("if _, err := req.SetResult(ret).", method, `("`, path, `"); err != nil {`)
 		gf.P("return nil, err")
 		gf.P("}")
 		gf.P("if ret.Code != 0 {")
