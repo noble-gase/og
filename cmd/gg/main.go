@@ -105,7 +105,7 @@ func main() {
 		Use:     "gg",
 		Short:   "生成Get方法^_^",
 		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
-		Version: "v0.0.1",
+		Version: "v0.0.2",
 		Example: internal.CmdExamples(
 			"gg .",
 			"gg a/b/c",
@@ -228,18 +228,20 @@ func genFile(node *ast.File, info *types.Info, filename string) {
 		var gt []GenType
 		if ts.TypeParams != nil {
 			for _, field := range ts.TypeParams.List {
+				typeName := info.TypeOf(field.Type).String()
 				for _, ident := range field.Names {
 					gt = append(gt, GenType{
 						Ident: ident.Name,
-						Type:  info.TypeOf(field.Type).String(),
+						Type:  typeName,
 					})
 				}
 			}
 		}
 
-		imports, data := buildStruct(info, ts, st, gt)
-		for _, v := range imports {
-			gen.Imports[v] = struct{}{}
+		// Analyze struct
+		imports, data := analyzeStruct(info, ts, st, gt)
+		for path := range imports {
+			gen.Imports[path] = struct{}{}
 		}
 		gen.Structs = append(gen.Structs, data)
 
@@ -265,7 +267,7 @@ func genFile(node *ast.File, info *types.Info, filename string) {
 	fmt.Println("Generated code saved to", outputFile)
 }
 
-func buildStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []GenType) ([]string, Struct) {
+func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []GenType) (map[string]struct{}, Struct) {
 	name := ts.Name.String()
 	receiver := "s"
 	if name != "<nil>" {
@@ -282,38 +284,25 @@ func buildStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []Ge
 		name += "]"
 	}
 
-	// Collect imports and fields
-	var (
-		imports []string
-		fields  []Field
-	)
+	// Collect fields and imports
+	fields := make([]Field, 0, len(st.Fields.List))
+	imports := make(map[string]struct{})
 	for _, field := range st.Fields.List {
-		// Skip embedded fields
-		if len(field.Names) == 0 {
-			continue
-		}
-
-		// 字段类型
-		fieldType := info.TypeOf(field.Type).String()
-		underlyingType := info.TypeOf(field.Type).Underlying().String()
-		// fmt.Println(field.Names, "[fieldType]", fieldType, "[underlyingType]", underlyingType)
-		if dotIndex := strings.LastIndex(fieldType, "."); dotIndex >= 0 {
-			if pkg := fieldType[:dotIndex]; !filepath.IsAbs(pkg) {
-				imports = append(imports, pkg)
-				if slashIndex := strings.LastIndex(fieldType, "/"); slashIndex >= 0 {
-					fieldType = fieldType[slashIndex+1:]
-				}
-			} else {
-				fieldType = fieldType[dotIndex+1:]
+		if len(field.Names) != 0 {
+			fieldType := info.TypeOf(field.Type)
+			// 包路径
+			for _, path := range analyzeImport(fieldType) {
+				imports[path] = struct{}{}
 			}
-		}
-
-		for _, name := range field.Names {
-			fields = append(fields, Field{
-				Name:    name.Name,
-				Type:    fieldType,
-				Default: getTypeValue(field.Type, fieldType, underlyingType, gt),
-			})
+			// 字段类型
+			typeName := analyzeTypeName(fieldType)
+			for _, name := range field.Names {
+				fields = append(fields, Field{
+					Name:    name.Name,
+					Type:    typeName,
+					Default: getTypeValue(field.Type, typeName, fieldType.Underlying().String(), gt),
+				})
+			}
 		}
 	}
 
@@ -322,6 +311,57 @@ func buildStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []Ge
 		Name:     name,
 		Fields:   fields,
 	}
+}
+
+func analyzeImport(fieldType types.Type) []string {
+	var imports []string
+	switch v := fieldType.(type) {
+	case *types.Alias:
+		if pkg := v.Obj().Pkg(); pkg != nil && len(pkg.Path()) != 0 {
+			imports = append(imports, pkg.Path())
+		}
+	case *types.Named:
+		if pkg := v.Obj().Pkg(); pkg != nil && len(pkg.Path()) != 0 {
+			imports = append(imports, pkg.Path())
+		}
+	case *types.Pointer:
+		imports = append(imports, analyzeImport(v.Elem())...)
+	case *types.Slice:
+		imports = append(imports, analyzeImport(v.Elem())...)
+	case *types.Map:
+		imports = append(imports, analyzeImport(v.Key())...)
+		imports = append(imports, analyzeImport(v.Elem())...)
+	}
+	return imports
+}
+
+func analyzeTypeName(fieldType types.Type) string {
+	var name string
+	switch v := fieldType.(type) {
+	case *types.Alias:
+		pkg := v.Obj().Pkg()
+		if pkg != nil && len(pkg.Path()) != 0 {
+			name = fmt.Sprintf("%s.%s", pkg.Name(), v.Obj().Name()) // 只保留包名 + 类型名
+		} else {
+			name = v.Obj().Name()
+		}
+	case *types.Named:
+		pkg := v.Obj().Pkg()
+		if pkg != nil && len(pkg.Path()) != 0 {
+			name = fmt.Sprintf("%s.%s", pkg.Name(), v.Obj().Name()) // 只保留包名 + 类型名
+		} else {
+			name = v.Obj().Name()
+		}
+	case *types.Pointer:
+		name = "*" + analyzeTypeName(v.Elem()) // 递归处理指针类型
+	case *types.Slice:
+		name = "[]" + analyzeTypeName(v.Elem()) // 递归处理切片类型
+	case *types.Map:
+		name = fmt.Sprintf("map[%s]%s", analyzeTypeName(v.Key()), analyzeTypeName(v.Elem())) // 处理 map 类型
+	default:
+		name = fieldType.String() // 其他类型（基本类型等）
+	}
+	return name
 }
 
 // 获取类型的默认值
