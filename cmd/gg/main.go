@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +19,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/tools/go/packages"
 )
+
+const suffix = "_getter.go"
 
 type GenBody struct {
 	PkgName string
@@ -105,7 +108,7 @@ func main() {
 		Use:     "gg",
 		Short:   "生成Get方法^_^",
 		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
-		Version: "v0.0.2",
+		Version: "v0.0.3",
 		Example: internal.CmdExamples(
 			"gg .",
 			"gg a/b/c",
@@ -161,7 +164,13 @@ func genGetter(path string) {
 	fset := token.NewFileSet()
 
 	// Parse package files
-	pkgMap, err := parser.ParseDir(fset, dir, nil, parser.AllErrors)
+	pkgMap, err := parser.ParseDir(fset, dir, func(info fs.FileInfo) bool {
+		// 过滤掉 `_getter.go` 结尾的文件
+		if strings.HasSuffix(info.Name(), suffix) {
+			return false
+		}
+		return true
+	}, parser.AllErrors)
 	if err != nil {
 		log.Fatalln("parser.ParseDir", internal.FmtErr(err))
 	}
@@ -260,7 +269,7 @@ func genFile(node *ast.File, info *types.Info, filename string) {
 	}
 
 	// Write to a file
-	outputFile := strings.ReplaceAll(sourceFile, ".go", "_getter.go")
+	outputFile := strings.ReplaceAll(sourceFile, ".go", suffix)
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0o755); err != nil {
 		log.Fatalln("os.WriteFile", internal.FmtErr(err))
 	}
