@@ -1,0 +1,26 @@
+package middleware
+
+import (
+	"fmt"
+	"net/http"
+	"runtime/debug"
+
+	"{{.Module}}/pkg/log"
+
+	"github.com/noble-gase/ne/result"
+	"go.uber.org/zap"
+)
+
+// Recovery panic recover middleware
+func Recovery(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			// panic 捕获
+			if err := recover(); err != nil {
+				log.Error(r.Context(), "server panic recoverd", zap.Any("error", err), zap.ByteString("stack", debug.Stack()))
+				result.Err(fmt.Errorf("server panic recoverd: %+v", err)).JSON(w, r)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}

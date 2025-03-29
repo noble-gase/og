@@ -1,0 +1,11 @@
+package greeter
+
+import "{{.Module}}/{{.ApiPkg}}"
+
+func New() {{.ApiName}}.GreeterServiceServer {
+	return new(greeter)
+}
+
+type greeter struct {
+	{{.ApiName}}.UnimplementedGreeterServiceServer
+}

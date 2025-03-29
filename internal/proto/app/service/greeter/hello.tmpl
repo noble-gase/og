@@ -1,0 +1,13 @@
+package greeter
+
+import (
+	"context"
+
+	"{{.Module}}/{{.ApiPkg}}"
+)
+
+func (g *greeter) SayHello(ctx context.Context, req *{{.ApiName}}.HelloRequest) (*{{.ApiName}}.HelloResponse, error) {
+	return &{{.ApiName}}.HelloResponse{
+		Message: "Hello " + req.Name,
+	}, nil
+}

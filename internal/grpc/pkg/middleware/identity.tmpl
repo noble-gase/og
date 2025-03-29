@@ -1,0 +1,30 @@
+package middleware
+
+import (
+	"context"
+
+	"{{.Module}}/pkg/identity"
+
+	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/conv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+)
+
+func Identity(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.Pairs()
+	}
+
+	token := md.Get(ne.HeaderAuthorization)
+	if len(token) == 0 {
+		return handler(ctx, req)
+	}
+
+	id := identity.FromAuthToken(ctx, token[0])
+	md.Set(identity.IdentityId, conv.IntToStr(id.Id))
+	md.Set(identity.IdentityToken, id.Token)
+
+	return handler(metadata.NewIncomingContext(ctx, md), req)
+}

@@ -14,11 +14,12 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# GoLand
 .idea/
+
+# VSCode
 .vscode/
+
 .DS_Store
-logs/
 *.log
-.env
-.yml
-config.toml
+

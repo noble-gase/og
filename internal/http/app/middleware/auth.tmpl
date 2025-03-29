@@ -1,0 +1,23 @@
+package middleware
+
+import (
+	"net/http"
+
+	"{{.Module}}/pkg/code"
+	"{{.Module}}/pkg/identity"
+
+	"github.com/noble-gase/ne/result"
+)
+
+// Auth App授权中间件
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		identityId := identity.GetIdentityId(r.Context())
+		if identityId == 0 {
+			result.Err(code.ErrAuth).JSON(w, r)
+			return
+		}
+		// TODO ...
+		next.ServeHTTP(w, r)
+	})
+}

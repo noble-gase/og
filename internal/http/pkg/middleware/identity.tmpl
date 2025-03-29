@@ -1,0 +1,34 @@
+package middleware
+
+import (
+	"net/http"
+
+	"{{.Module}}/pkg/identity"
+
+	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/conv"
+	"github.com/noble-gase/ne/metadata"
+)
+
+// Identity parse identity into context
+func Identity(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get(ne.HeaderAuthorization)
+		if len(token) == 0 {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := r.Context()
+		id := identity.FromAuthToken(ctx, token)
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			md = metadata.Pairs()
+		}
+		md.Set(identity.IdentityId, conv.IntToStr(id.Id))
+		md.Set(identity.IdentityToken, id.Token)
+
+		next.ServeHTTP(w, r.WithContext(metadata.NewIncomingContext(ctx, md)))
+	})
+}

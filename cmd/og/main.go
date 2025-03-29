@@ -142,7 +142,7 @@ func app() *cobra.Command {
 			fmt.Println("🍺 创建应用文件")
 			if grpc {
 				for _, name := range args {
-					if path, ok := internal.IsDirEmpty("pkg/app/" + name); !ok {
+					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
 						fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 						return
 					}
@@ -150,7 +150,7 @@ func app() *cobra.Command {
 				}
 			} else {
 				for _, name := range args {
-					if path, ok := internal.IsDirEmpty("pkg/app/" + name); !ok {
+					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
 						fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 						return
 					}
@@ -200,14 +200,14 @@ func ent() *cobra.Command {
 			fmt.Println("🍺 创建Ent文件")
 			if len(args) != 0 {
 				for _, name := range args {
-					if path, ok := internal.IsDirEmpty("pkg/ent/" + name); !ok {
+					if path, ok := internal.IsDirEmpty("internal/ent/" + name); !ok {
 						fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 						return
 					}
 					internal.InitEnt(".", f.Module.Mod.Path, name)
 				}
 			} else {
-				if path, ok := internal.IsDirEmpty("pkg/ent"); !ok {
+				if path, ok := internal.IsDirEmpty("internal/ent"); !ok {
 					fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 					return
 				}
@@ -224,13 +224,13 @@ func ent() *cobra.Command {
 			fmt.Println("🍺 执行 ent generate")
 			if len(args) != 0 {
 				for _, name := range args {
-					entGen := exec.Command("go", "generate", "./pkg/ent/"+name)
+					entGen := exec.Command("go", "generate", "./internal/ent/"+name)
 					if err := entGen.Run(); err != nil {
 						log.Fatalln("🐛 ent generate 执行失败:", internal.FmtErr(err))
 					}
 				}
 			} else {
-				entGen := exec.Command("go", "generate", "./pkg/ent")
+				entGen := exec.Command("go", "generate", "./internal/ent")
 				if err := entGen.Run(); err != nil {
 					log.Fatalln("🐛 ent generate 执行失败:", internal.FmtErr(err))
 				}

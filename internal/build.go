@@ -16,50 +16,128 @@ import (
 	"github.com/noble-gase/og/internal/ent"
 	"github.com/noble-gase/og/internal/grpc"
 	"github.com/noble-gase/og/internal/http"
+	"github.com/noble-gase/og/internal/proto"
 )
 
 type Params struct {
 	Module  string
+	ApiPkg  string
+	ApiName string
 	AppPkg  string
 	AppName string
 	DockerF string
-	Proto   bool
 }
 
-func InitHttpProject(root, mod string, proto bool, apps ...string) {
-	// 创建项目
-	initProject(root, mod, proto, http.FS)
-	// 创建App(单应用)
+func InitHttpProject(root, mod string, pb bool, apps ...string) {
+	fsys := http.FS
+	if pb {
+		fsys = proto.FS
+	}
+
+	params := &Params{
+		Module:  mod,
+		ApiPkg:  "api",
+		ApiName: "api",
+		AppPkg:  "app",
+		AppName: root,
+		DockerF: "Dockerfile",
+	}
+
+	genRoot(root, params, fsys)
+	genPkg(root, params, fsys)
+
 	if len(apps) == 0 {
-		initApp(root, mod, "", proto, http.FS)
+		if pb {
+			genApi(root, params, fsys)
+		}
+		genApp(root, params, fsys)
+		genCmd(root, params, fsys)
 		return
 	}
-	// 创建App(多应用)
+
 	for _, name := range apps {
-		initApp(root, mod, name, proto, http.FS)
+		params.ApiPkg = "api/" + name
+		params.ApiName = name
+		params.AppPkg = "app/" + name
+		params.AppName = name
+		params.DockerF = name + ".dockerfile"
+
+		if pb {
+			genApi(root, params, fsys, name)
+		}
+		genApp(root, params, fsys, name)
+		genCmd(root, params, fsys, name)
 	}
 }
 
-func InitHttpApp(root, mod, name string, proto bool) {
-	initApp(root, mod, name, proto, http.FS)
+func InitHttpApp(root, mod, name string, pb bool) {
+	fsys := http.FS
+	if pb {
+		fsys = proto.FS
+	}
+
+	params := &Params{
+		Module:  mod,
+		ApiPkg:  "api/" + name,
+		ApiName: name,
+		AppPkg:  "app/" + name,
+		AppName: name,
+		DockerF: name + ".dockerfile",
+	}
+
+	if pb {
+		genApi(root, params, fsys, name)
+	}
+	genApp(root, params, fsys, name)
+	genCmd(root, params, fsys, name)
 }
 
 func InitGrpcProject(root, mod string, apps ...string) {
-	// 创建项目
-	initProject(root, mod, false, grpc.FS)
-	// 创建App(单应用)
+	params := &Params{
+		Module:  mod,
+		ApiPkg:  "api",
+		ApiName: "api",
+		AppPkg:  "app",
+		AppName: root,
+		DockerF: "Dockerfile",
+	}
+
+	genRoot(root, params, grpc.FS)
+	genPkg(root, params, grpc.FS)
+
 	if len(apps) == 0 {
-		initApp(root, mod, "", false, grpc.FS)
+		genApi(root, params, grpc.FS)
+		genApp(root, params, grpc.FS)
+		genCmd(root, params, grpc.FS)
 		return
 	}
-	// 创建App(多应用)
+
 	for _, name := range apps {
-		initApp(root, mod, name, false, grpc.FS)
+		params.ApiPkg = "api/" + name
+		params.ApiName = name
+		params.AppPkg = "app/" + name
+		params.AppName = name
+		params.DockerF = name + ".dockerfile"
+
+		genApi(root, params, grpc.FS, name)
+		genApp(root, params, grpc.FS, name)
+		genCmd(root, params, grpc.FS, name)
 	}
 }
 
 func InitGrpcApp(root, mod, name string) {
-	initApp(root, mod, name, false, grpc.FS)
+	params := &Params{
+		Module:  mod,
+		ApiPkg:  "api/" + name,
+		ApiName: name,
+		AppPkg:  "app/" + name,
+		AppName: name,
+		DockerF: name + ".dockerfile",
+	}
+
+	genApi(root, params, grpc.FS, name)
+	genApp(root, params, grpc.FS, name)
+	genCmd(root, params, grpc.FS, name)
 }
 
 func InitEnt(root, mod, name string) {
@@ -70,12 +148,12 @@ func InitEnt(root, mod, name string) {
 	if len(name) != 0 {
 		params.AppName = name
 	}
-	// ent目录文件
+
 	_ = fs.WalkDir(ent.FS, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {
 			return nil
 		}
-		output := genOutput(root+"/pkg/ent", path, "")
+		output := genOutput(root+"/internal/ent", path, "")
 		if len(name) != 0 {
 			output = strings.Replace(output, "/ent", "/ent/"+name, 1)
 		}
@@ -84,12 +162,7 @@ func InitEnt(root, mod, name string) {
 	})
 }
 
-func initProject(root, mod string, proto bool, fsys embed.FS) {
-	params := &Params{
-		Module: mod,
-		Proto:  proto,
-	}
-	// 项目根目录文件
+func genRoot(root string, params *Params, fsys embed.FS) {
 	files, _ := fs.ReadDir(fsys, ".")
 	for _, v := range files {
 		if v.IsDir() || filepath.Ext(v.Name()) == ".go" {
@@ -98,22 +171,11 @@ func initProject(root, mod string, proto bool, fsys embed.FS) {
 		output := genOutput(root, v.Name(), "")
 		buildTmpl(fsys, v.Name(), filepath.Clean(output), params)
 	}
-	// lib目录文件
-	_ = fs.WalkDir(fsys, "pkg/lib", func(path string, d fs.DirEntry, err error) error {
+}
+
+func genPkg(root string, params *Params, fsys embed.FS) {
+	_ = fs.WalkDir(fsys, "pkg", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {
-			return nil
-		}
-		output := genOutput(root, path, "")
-		buildTmpl(fsys, path, filepath.Clean(output), params)
-		return nil
-	})
-	// internal目录文件
-	_ = fs.WalkDir(fsys, "pkg/internal", func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || filepath.Ext(path) == ".go" {
-			return nil
-		}
-		// proto模式下，无需code
-		if proto && path == "pkg/internal/code/code.tmpl" {
 			return nil
 		}
 		output := genOutput(root, path, "")
@@ -122,49 +184,49 @@ func initProject(root, mod string, proto bool, fsys embed.FS) {
 	})
 }
 
-func initApp(root, mod, name string, proto bool, fsys embed.FS) {
-	params := &Params{
-		Module:  mod,
-		AppPkg:  "app",
-		AppName: root,
-		DockerF: "Dockerfile",
-		Proto:   proto,
-	}
-	if len(name) != 0 {
-		params.AppPkg = "app/" + name
-		params.AppName = name
-		params.DockerF = name + ".dockerfile"
-	}
-	// app目录文件
-	if proto {
-		_ = fs.WalkDir(fsys, "pkg/proto", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() || filepath.Ext(path) == ".go" {
-				return nil
-			}
-			appPath := strings.Replace(path, "proto", "app", 1)
-			output := genOutput(root, appPath, name)
-			if len(name) != 0 {
-				output = strings.Replace(output, "/app", "/app/"+name, 1)
-			}
-			buildTmpl(fsys, path, filepath.Clean(output), params)
-			return nil
-		})
-		return
-	}
-	_ = fs.WalkDir(fsys, "pkg/app", func(path string, d fs.DirEntry, err error) error {
+func genApi(root string, params *Params, fsys embed.FS, appname ...string) {
+	_ = fs.WalkDir(fsys, "api", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {
 			return nil
 		}
-		output := genOutput(root, path, name)
-		if len(name) != 0 {
-			output = strings.Replace(output, "/app", "/app/"+name, 1)
+		output := genOutput(root, path, appname...)
+		if len(appname) != 0 {
+			output = strings.Replace(output, "/api", "/api/"+appname[0], 1)
 		}
 		buildTmpl(fsys, path, filepath.Clean(output), params)
 		return nil
 	})
 }
 
-func genOutput(root, path, appName string) string {
+func genApp(root string, params *Params, fsys embed.FS, appname ...string) {
+	_ = fs.WalkDir(fsys, "app", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || filepath.Ext(path) == ".go" {
+			return nil
+		}
+		output := genOutput(root+"/internal", path, appname...)
+		if len(appname) != 0 {
+			output = strings.Replace(output, "/app", "/app/"+appname[0], 1)
+		}
+		buildTmpl(fsys, path, filepath.Clean(output), params)
+		return nil
+	})
+}
+
+func genCmd(root string, params *Params, fsys embed.FS, appname ...string) {
+	_ = fs.WalkDir(fsys, "cmd", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || filepath.Ext(path) == ".go" {
+			return nil
+		}
+		output := genOutput(root, path, appname...)
+		if len(appname) != 0 {
+			output = strings.Replace(output, "/cmd", "/cmd/"+appname[0], 1)
+		}
+		buildTmpl(fsys, path, filepath.Clean(output), params)
+		return nil
+	})
+}
+
+func genOutput(root, path string, appname ...string) string {
 	var builder strings.Builder
 	// 项目根目录
 	builder.WriteString(root)
@@ -173,17 +235,17 @@ func genOutput(root, path, appName string) string {
 	dir, name := filepath.Split(path)
 	// dockerfile
 	switch name {
-	case "Dockerfile":
-		if len(appName) != 0 {
-			builder.WriteString(appName)
+	case "dockerfile.tmpl":
+		if len(appname) != 0 {
+			builder.WriteString(appname[0])
 			builder.WriteString(".dockerfile")
 		} else {
 			builder.WriteString("Dockerfile")
 		}
 		return filepath.Clean(builder.String())
 	case "dockerun.sh":
-		if len(appName) != 0 {
-			builder.WriteString(appName)
+		if len(appname) != 0 {
+			builder.WriteString(appname[0])
 			builder.WriteString("_dockerun.sh")
 		} else {
 			builder.WriteString("dockerun.sh")
