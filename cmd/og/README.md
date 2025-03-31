@@ -13,9 +13,9 @@ go install github.com/noble-gase/og/cmd/og@latest
 
 ## 创建项目
 
-#### HTTP
+### HTTP
 
-- **单应用**
+##### 单应用
 
 ```shell
 og new demo
@@ -40,7 +40,7 @@ og new demo --mod=xxx.com/demo # 指定module名称
 └── README.md
 ```
 
-- **多应用**
+##### 多应用
 
 ```shell
 og new demo --apps=foo,bar
@@ -79,9 +79,9 @@ og new demo --mod=xxx.com/demo --apps=foo --apps=bar
 └── README.md
 ```
 
-#### HTTP -- 使用proto定义API
+### HTTP -- 使用proto定义API
 
-- **单应用**
+##### 单应用
 
 ```shell
 og new demo --proto # 使用proto定义API
@@ -111,7 +111,7 @@ og new demo --mod=xxx.com/demo --proto # 指定module名称
 └── README.md
 ```
 
-- **多应用**
+##### 多应用
 
 ```shell
 og new demo --apps=foo,bar --proto # 使用proto定义API
@@ -158,9 +158,9 @@ og new demo --mod=xxx.com/demo --apps=foo --apps=bar --proto
 └── README.md
 ```
 
-#### gRPC
+### gRPC
 
-- **单应用**
+##### 单应用
 
 ```shell
 og new demo --grpc
@@ -189,7 +189,7 @@ og new demo --mod=xxx.com/demo --grpc # 指定module名称
 └── README.md
 ```
 
-- **多应用**
+##### 多应用
 
 ```shell
 og new demo --apps=foo,bar --grpc
