@@ -198,7 +198,7 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
 		gf.P("if err := ", contribPkg.Ident("BindProto"), "(r, req); err != nil {")
-		gf.P(resultPkg.Ident("Err"), `(ErrParams, err.Error()).JSON(w, r)`)
+		gf.P(resultPkg.Ident("Err"), `(ErrParams.New(err.Error())).JSON(w, r)`)
 		gf.P("return")
 		gf.P("}")
 		gf.P("// call service")
