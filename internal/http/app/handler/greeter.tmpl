@@ -18,7 +18,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	req := new(greeter.ReqHello)
 	if err := ne.BindJSON(r, req); err != nil {
 		log.Error(ctx, "params invalid", zap.Error(err))
-		result.Err(code.ErrParams, err.Error()).JSON(w, r)
+		result.Err(code.ErrParams.New(err.Error())).JSON(w, r)
 		return
 	}
 	greeter.Hello(ctx, req).JSON(w, r)
