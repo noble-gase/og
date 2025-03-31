@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: greeter.proto
 
-package api
+package {{.ApiName}}
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
@@ -124,8 +124,8 @@ const file_greeter_proto_rawDesc = "" +
 	"\rHelloResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage2[\n" +
 	"\x0eGreeterService\x12I\n" +
-	"\bSayHello\x12\x11.api.HelloRequest\x1a\x12.api.HelloResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/greeterBS\n" +
-	"\acom.apiB\fGreeterProtoP\x01Z\x0eiiinsomnia/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
+	"\bSayHello\x12\x11.api.HelloRequest\x1a\x12.api.HelloResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/greeterBM\n" +
+	"\acom.apiB\fGreeterProtoP\x01Z\bdemo/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
 
 var (
 	file_greeter_proto_rawDescOnce sync.Once

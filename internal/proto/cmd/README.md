@@ -5,5 +5,5 @@
 3. 执行 `buf dep update` 更新proto依赖
 4. 执行 `go run main.go` 运行
 5. 执行 `go run main.go -h` 查看命令
-6. 项目根目录执行 `og ent <name>` 生成ent文件
-7. 查看文档 `swagger serve api.swagger.json`
+6. 根目录执行 `og ent <name>` 生成ent模块
+7. 查看API文档 `swagger serve xxx.swagger.json`

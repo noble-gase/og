@@ -6,7 +6,6 @@ package {{.ApiName}};
 
 import "google/api/annotations.proto";
 import "buf/validate/validate.proto";
-import "google/protobuf/wrappers.proto";
 
 // Here is the overall greeting service definition where we define all our endpoints
 service GreeterService {
