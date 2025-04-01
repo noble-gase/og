@@ -16,8 +16,8 @@ func main() {
 	cmd := &cobra.Command{
 		Use:     "og",
 		Short:   "项目脚手架",
-		Long:    "项目脚手架，用于快速创建Go项目",
-		Version: "v0.0.2",
+		Long:    "项目脚手架，快速创建Go项目",
+		Version: "v0.0.3",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
@@ -26,7 +26,7 @@ func main() {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("欢迎使用og脚手架")
+			fmt.Println("欢迎使用noble-gase[og]脚手架")
 		},
 	}
 	// 注册命令
@@ -52,6 +52,12 @@ func project() *cobra.Command {
 			"og new demo --apps=foo,bar",
 			"og new demo --apps=foo --apps=bar",
 			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar",
+			"-- HTTP(proto) --",
+			"og new demo --proto",
+			"og new demo --mod=xxx.yyy.com --proto",
+			"og new demo --apps=foo,bar --proto",
+			"og new demo --apps=foo --apps=bar --proto",
+			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar --proto",
 			"-- gRPC --",
 			"og new demo --grpc",
 			"og new demo --mod=xxx.yyy.com --grpc",
@@ -103,7 +109,7 @@ func project() *cobra.Command {
 	// 注册参数
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "创建gRPC项目")
 	cmd.Flags().BoolVar(&proto, "proto", false, "使用proto定义API")
-	cmd.Flags().StringVar(&mod, "mod", "", "设置Module名称（默认为项目名称）")
+	cmd.Flags().StringVar(&mod, "mod", "", "设置Module名称(默认为项目名称)")
 	cmd.Flags().StringSliceVar(&apps, "apps", []string{}, "创建多应用项目")
 	return cmd
 }
@@ -117,6 +123,8 @@ func app() *cobra.Command {
 		Example: internal.CmdExamples(
 			"-- HTTP --",
 			"og app hello",
+			"-- HTTP(proto) --",
+			"og app hello --proto",
 			"-- gRPC --",
 			"og app hello --grpc",
 		),
@@ -176,7 +184,7 @@ func app() *cobra.Command {
 func ent() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ent",
-		Short: "创建Ent实例",
+		Short: "创建Ent模块",
 		Example: internal.CmdExamples(
 			"-- 默认实例 --",
 			"og ent",
@@ -242,7 +250,7 @@ func ent() *cobra.Command {
 			if err := modClean.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy 执行失败:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 Ent实例创建完成！请阅读README")
+			fmt.Println("🍺 Ent模块创建完成！请阅读README")
 		},
 	}
 	return cmd

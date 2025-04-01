@@ -12,7 +12,7 @@ import (
 	"{{.Module}}/pkg/trace"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/rs/cors"
+	"github.com/noble-gase/ne/cors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -57,16 +57,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn) *http.Server {
 		log.Fatal(ctx, "register http failed", zap.Error(err))
 	}
 	// With CORS
-	withCors := cors.New(cors.Options{
-		// AllowedOrigins:   []string{"*"},
-		AllowOriginFunc: func(origin string) bool {
-			return true
-		},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "withCredentials"},
-		ExposedHeaders:   []string{trace.TraceId}, // 服务器暴露一些自定义的头信息，允许客户端访问
-		AllowCredentials: true,
-	}).Handler(mux)
+	withCors := cors.New(cors.ACEH(trace.TraceId)).Handler(mux)
 	// Serve HTTP server
 	addr := ":" + viper.GetString("port.http")
 	srv := &http.Server{

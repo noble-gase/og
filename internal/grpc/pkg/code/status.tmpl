@@ -12,21 +12,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func Error(ctx context.Context, err error, msg ...string) error {
+func Error(ctx context.Context, err error) error {
 	var (
 		code gcodes.Code
 		text string
 	)
 	switch v := err.(type) {
 	case codes.Code:
-		code = gcodes.Code(v.V())
-		text = v.M()
+		code = gcodes.Code(v.Val())
+		text = v.Msg()
 	default:
-		code = gcodes.Unknown
-		text = err.Error()
-	}
-	if len(msg) != 0 {
-		text = msg[0]
+		code = gcodes.Code(codes.Unknown.Val())
+		text = codes.Unknown.Msg()
 	}
 
 	var traceId string
