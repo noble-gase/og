@@ -18,7 +18,8 @@ go install github.com/noble-gase/og/cmd/og@latest
 ##### 单应用
 
 ```shell
-og new demo
+og new . # 在当前目录初始化项目
+og new demo # 创建demo项目
 og new demo --mod=xxx.com/demo # 指定module名称
 .
 ├── cmd
@@ -43,7 +44,8 @@ og new demo --mod=xxx.com/demo # 指定module名称
 ##### 多应用
 
 ```shell
-og new demo --apps=foo,bar
+og new . --apps=foo,bar # 在当前目录初始化项目
+og new demo --apps=foo,bar # 创建demo项目
 og new demo --mod=xxx.com/demo --apps=foo,bar
 og new demo --mod=xxx.com/demo --apps=foo --apps=bar
 .
@@ -84,7 +86,8 @@ og new demo --mod=xxx.com/demo --apps=foo --apps=bar
 ##### 单应用
 
 ```shell
-og new demo --proto # 使用proto定义API
+og new . --proto # 在当前目录初始化项目
+og new demo --proto # 创建demo项目
 og new demo --mod=xxx.com/demo --proto # 指定module名称
 .
 ├── api
@@ -114,7 +117,8 @@ og new demo --mod=xxx.com/demo --proto # 指定module名称
 ##### 多应用
 
 ```shell
-og new demo --apps=foo,bar --proto # 使用proto定义API
+og new . --apps=foo,bar --proto # 在当前目录初始化项目
+og new demo --apps=foo,bar --proto # 创建demo项目
 og new demo --mod=xxx.com/demo --apps=foo,bar --proto
 og new demo --mod=xxx.com/demo --apps=foo --apps=bar --proto
 .
@@ -163,7 +167,8 @@ og new demo --mod=xxx.com/demo --apps=foo --apps=bar --proto
 ##### 单应用
 
 ```shell
-og new demo --grpc
+og new . --grpc # 在当前目录初始化项目
+og new demo --grpc # 创建demo项目
 og new demo --mod=xxx.com/demo --grpc # 指定module名称
 .
 ├── api
@@ -192,7 +197,8 @@ og new demo --mod=xxx.com/demo --grpc # 指定module名称
 ##### 多应用
 
 ```shell
-og new demo --apps=foo,bar --grpc
+og new . --apps=foo,bar --grpc # 在当前目录初始化项目
+og new demo --apps=foo,bar --grpc # 创建demo项目
 og new demo --mod=xxx.com/demo --apps=foo,bar --grpc
 og new demo --mod=xxx.com/demo --apps=foo --apps=bar --grpc
 .

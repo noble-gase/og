@@ -296,6 +296,14 @@ func buildTmpl(fsys embed.FS, path, output string, params *Params) {
 	fmt.Println(output)
 }
 
+func GetCurDir() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Base(wd), nil
+}
+
 func IsDirEmpty(path string) (string, bool) {
 	absPath, err := filepath.Abs(filepath.Clean(path))
 	if err != nil {

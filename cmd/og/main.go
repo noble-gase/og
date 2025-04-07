@@ -30,14 +30,14 @@ func main() {
 		},
 	}
 	// 注册命令
-	cmd.AddCommand(project(), app(), ent())
+	cmd.AddCommand(new(), app(), ent())
 	// 执行
 	if err := cmd.Execute(); err != nil {
 		log.Fatalln("cmd.Execute:", internal.FmtErr(err))
 	}
 }
 
-func project() *cobra.Command {
+func new() *cobra.Command {
 	var grpc bool
 	var proto bool
 	var mod string
@@ -47,18 +47,21 @@ func project() *cobra.Command {
 		Short: "创建项目",
 		Example: internal.CmdExamples(
 			"-- HTTP --",
+			"og new .",
 			"og new demo",
 			"og new demo --mod=xxx.yyy.com",
 			"og new demo --apps=foo,bar",
 			"og new demo --apps=foo --apps=bar",
 			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar",
 			"-- HTTP(proto) --",
+			"og new . --proto",
 			"og new demo --proto",
 			"og new demo --mod=xxx.yyy.com --proto",
 			"og new demo --apps=foo,bar --proto",
 			"og new demo --apps=foo --apps=bar --proto",
 			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar --proto",
 			"-- gRPC --",
+			"og new . --grpc",
 			"og new demo --grpc",
 			"og new demo --mod=xxx.yyy.com --grpc",
 			"og new demo --apps=foo,bar --grpc",
@@ -73,13 +76,25 @@ func project() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			workDir := args[0]
+			if workDir == "." {
+				// 判断是否存在go.mod
+				_, err := os.Stat("go.mod")
+				if err == nil || !os.IsNotExist(err) {
+					log.Fatalln("🐛 当前目录已存在go.mod，请确认！")
+				}
+				workDir, err = internal.GetCurDir()
+				if err != nil {
+					log.Fatalln("🐛 获取当前目录失败:", internal.FmtErr(err))
+				}
+			} else {
+				// 判断目录是否为空
+				if path, ok := internal.IsDirEmpty(workDir); !ok {
+					fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
+					return
+				}
+			}
 			if len(mod) == 0 {
 				mod = workDir
-			}
-			// 判断目录是否为空
-			if path, ok := internal.IsDirEmpty(workDir); !ok {
-				fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
-				return
 			}
 			// 创建项目文件
 			fmt.Println("🍺 创建项目文件")
