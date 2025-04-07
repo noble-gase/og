@@ -82,9 +82,11 @@ func new() *cobra.Command {
 				if err == nil || !os.IsNotExist(err) {
 					log.Fatalln("🐛 当前目录已存在go.mod，请确认！")
 				}
-				workDir, err = internal.GetCurDir()
-				if err != nil {
-					log.Fatalln("🐛 获取当前目录失败:", internal.FmtErr(err))
+				if len(mod) == 0 {
+					mod, err = internal.GetCurDir()
+					if err != nil {
+						log.Fatalln("🐛 获取当前目录失败:", internal.FmtErr(err))
+					}
 				}
 			} else {
 				// 判断目录是否为空
@@ -92,9 +94,9 @@ func new() *cobra.Command {
 					fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 					return
 				}
-			}
-			if len(mod) == 0 {
-				mod = workDir
+				if len(mod) == 0 {
+					mod = workDir
+				}
 			}
 			// 创建项目文件
 			fmt.Println("🍺 创建项目文件")
@@ -234,7 +236,7 @@ func ent() *cobra.Command {
 					fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 					return
 				}
-				internal.InitEnt(".", f.Module.Mod.Path, "")
+				internal.InitEnt(".", f.Module.Mod.Path)
 			}
 			// go mod tidy
 			fmt.Println("🍺 执行 go mod tidy")

@@ -140,22 +140,22 @@ func InitGrpcApp(root, mod, name string) {
 	genCmd(root, params, grpc.FS, name)
 }
 
-func InitEnt(root, mod, name string) {
+func InitEnt(root, mod string, name ...string) {
 	params := &Params{
 		Module:  mod,
 		AppName: "ent",
 	}
 	if len(name) != 0 {
-		params.AppName = name
+		params.AppName = name[0]
 	}
 
 	_ = fs.WalkDir(ent.FS, ".", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {
 			return nil
 		}
-		output := genOutput(root+"/internal/ent", path, "")
+		output := genOutput(root+"/internal/ent", path, name...)
 		if len(name) != 0 {
-			output = strings.Replace(output, "/ent", "/ent/"+name, 1)
+			output = strings.Replace(output, "/ent", "/ent/"+name[0], 1)
 		}
 		buildTmpl(ent.FS, path, filepath.Clean(output), params)
 		return nil
@@ -228,7 +228,7 @@ func genCmd(root string, params *Params, fsys embed.FS, appname ...string) {
 
 func genOutput(root, path string, appname ...string) string {
 	var builder strings.Builder
-	// 项目根目录
+	// 根目录
 	builder.WriteString(root)
 	builder.WriteString("/")
 	// 解析path
