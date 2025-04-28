@@ -67,7 +67,7 @@ package demo
 
 import (
 	"context"
-	"github.com/shenghui0779/og"
+	"github.com/noble-gase/ne"
 	"time"
 )
 
@@ -150,11 +150,11 @@ func (d *Demo[T, E]) GetFieldTime() time.Time {
 	return time.Time{}
 }
 
-func (d *Demo[T, E]) GetFieldStep() og.Step {
+func (d *Demo[T, E]) GetFieldStep() ne.Step {
 	if d != nil {
 		return d.FieldStep
 	}
-	return og.Step{}
+	return ne.Step{}
 }
 
 func (d *Demo[T, E]) GetFieldGenT() T {
