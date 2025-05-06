@@ -1,4 +1,4 @@
-package code
+package status
 
 import (
 	"context"
@@ -13,24 +13,14 @@ import (
 )
 
 func Error(ctx context.Context, err error) error {
-	var (
-		code gcodes.Code
-		text string
-	)
-	switch v := err.(type) {
-	case codes.Code:
-		code = gcodes.Code(v.Val())
-		text = v.Msg()
-	default:
-		code = gcodes.Code(codes.Unknown.Val())
-		text = codes.Unknown.Msg()
-	}
+	code := codes.FromError(err)
 
-	var traceId string
+	traceId := "-"
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if vals := md.Get(trace.TraceId); len(vals) != 0 {
 			traceId = vals[0]
 		}
 	}
-	return status.Error(code, fmt.Sprintf("[%s] %s", traceId, text))
+
+	return status.Error(gcodes.Code(code.Val()), fmt.Sprintf("[%s] %s", traceId, code.Msg()))
 }

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"{{.Module}}/pkg/code"
-	"{{.Module}}/pkg/validator"
+	"{{.Module}}/pkg/status"
 
+	"github.com/noble-gase/ne/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -13,8 +14,8 @@ import (
 func Validator(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	msg, ok := req.(proto.Message)
 	if ok {
-		if err := validator.Check(msg); err != nil {
-			return nil, code.Error(ctx, code.ErrParams.New(err.Error()))
+		if err := protos.Validate(msg); err != nil {
+			return nil, status.Error(ctx, code.ErrParams.New(err.Error()))
 		}
 	}
 	return handler(ctx, req)
