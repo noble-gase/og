@@ -10,42 +10,48 @@ import (
 )
 
 var (
-	requestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "demo",
-		Subsystem: "api",
-		Name:      "requests_count",
-		Help:      "The total number of http request",
+	// 请求次数
+	reqCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "request_count",
+		Help: "The total number of http request",
 	}, []string{"method", "path", "status"})
 
-	requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "demo",
-		Subsystem: "api",
-		Name:      "requests_duration",
-		Help:      "The http request latency in seconds",
+	// 请求时长
+	reqDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "request_duration",
+		Help: "The http request latency in seconds",
 	}, []string{"method", "path", "status"})
 )
 
 func init() {
-	prometheus.MustRegister(requestCounter)
-	prometheus.MustRegister(requestDuration)
+	prometheus.MustRegister(reqCnt)
+	prometheus.MustRegister(reqDur)
 }
 
-// Monitor 监控请求次数，时长
+// Monitor 监控
 func Monitor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().Local()
-		requestCounter.With(prometheus.Labels{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		}).Inc()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
 		defer func() {
-			requestDuration.With(prometheus.Labels{
+			status := strconv.Itoa(ww.Status())
+
+			// 请求次数
+			reqCnt.With(prometheus.Labels{
 				"method": r.Method,
 				"path":   r.URL.Path,
-				"status": strconv.Itoa(ww.Status()),
+				"status": status,
+			}).Inc()
+
+			// 请求时长
+			reqDur.With(prometheus.Labels{
+				"method": r.Method,
+				"path":   r.URL.Path,
+				"status": status,
 			}).Observe(time.Since(now).Seconds())
 		}()
+
 		next.ServeHTTP(ww, r)
 	})
 }

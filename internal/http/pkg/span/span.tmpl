@@ -16,7 +16,7 @@ type Span struct {
 	l int
 	n string
 	t time.Time
-	m string
+	x []string
 }
 
 func (s *Span) Finish(ctx context.Context) {
@@ -25,7 +25,7 @@ func (s *Span) Finish(ctx context.Context) {
 		zap.String("duration", time.Since(s.t).String()),
 		zap.String("file", s.f),
 		zap.Int("line", s.l),
-		zap.String("msg", s.m),
+		zap.Strings("tags", s.x),
 	)
 }
 
@@ -35,10 +35,10 @@ func (s *Span) Finish(ctx context.Context) {
 //
 //	sp := span.New()
 //	defer sp.Finish(ctx)
-func New(msg ...string) *Span {
-	sp := &Span{t: time.Now(), m: "<nil>"}
-	if len(msg) != 0 {
-		sp.m = msg[0]
+func New(tags ...string) *Span {
+	sp := &Span{
+		t: time.Now(),
+		x: tags,
 	}
 	// Skip level 1 to get the caller function
 	pc, file, line, _ := runtime.Caller(1)
