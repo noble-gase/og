@@ -22,10 +22,13 @@ func Init(ctx context.Context, cfgFile string) {
 	// 初始化日志
 	log.Init()
 	// TODO: 其它初始化操作，如：数据库等
+	// ent.Init(ctx, "db")
 }
 
 // CleanUp 清理资源
 func CleanUp() {
 	// TODO: 资源Close（如：数据库连接等）
-	fmt.Println("clean up")
+	// if ent.DB != nil {
+	// 	_ = ent.DB.Close()
+	// }
 }

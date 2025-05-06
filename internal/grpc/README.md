@@ -18,8 +18,10 @@ Go gRPC项目快速开发脚手架
 ### 前提条件
 
 ```sh
-# orm
+# ent
 go install entgo.io/ent/cmd/ent@latest
+# generate
+og ent
 
 # proto
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest

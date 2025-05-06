@@ -25,10 +25,13 @@ func Init(ctx context.Context, cfgFile string) {
 	// 初始化Validator
 	validator.Init(ctx)
 	// TODO: 其它初始化操作，如：数据库等
+	// ent.Init(ctx, "db")
 }
 
 // CleanUp 清理资源
 func CleanUp() {
 	// TODO: 资源Close（如：数据库连接等）
-	fmt.Println("clean up")
+	// if ent.DB != nil {
+	// 	_ = ent.DB.Close()
+	// }
 }

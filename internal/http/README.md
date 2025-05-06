@@ -17,4 +17,7 @@ Go Web项目快速开发脚手架
 ```sh
 # ent
 go install entgo.io/ent/cmd/ent@latest
+
+# generate
+og ent
 ```
