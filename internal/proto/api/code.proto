@@ -6,9 +6,9 @@ package {{.ApiName}};
 
 enum Code {
   OK = 0;
-  ERR_PARAMS = 10000;//参数错误
-  ERR_AUTH = 20000;//未授权，请先登录
-  ERR_PERM = 30000;//权限不足
-  ERR_NOT_FOUND = 40000;//数据不存在
-  ERR_SYSTEM = 50000;//内部服务器错误，请稍后重试
+  ERR_PARAMS = 10000;//zh=参数错误;en=params error
+  ERR_AUTH = 20000;//zh=未授权，请先登录;en=unauthorized, please login first
+  ERR_PERM = 30000;//zh=权限不足;en=permission denied
+  ERR_NOT_FOUND = 40000;//zh=数据不存在;en=data not found
+  ERR_SYSTEM = 50000;//zh=内部服务器错误，请稍后重试;en=internal server error, please try again later
 }

@@ -25,11 +25,11 @@ type Code int32
 
 const (
 	Code_OK            Code = 0
-	Code_ERR_PARAMS    Code = 10000 //参数错误
-	Code_ERR_AUTH      Code = 20000 //未授权，请先登录
-	Code_ERR_PERM      Code = 30000 //权限不足
-	Code_ERR_NOT_FOUND Code = 40000 //数据不存在
-	Code_ERR_SYSTEM    Code = 50000 //内部服务器错误，请稍后重试
+	Code_ERR_PARAMS    Code = 10000 //zh=参数错误;en=params error
+	Code_ERR_AUTH      Code = 20000 //zh=未授权，请先登录;en=unauthorized, please login first
+	Code_ERR_PERM      Code = 30000 //zh=权限不足;en=permission denied
+	Code_ERR_NOT_FOUND Code = 40000 //zh=数据不存在;en=data not found
+	Code_ERR_SYSTEM    Code = 50000 //zh=内部服务器错误，请稍后重试;en=internal server error, please try again later
 )
 
 // Enum value maps for Code.

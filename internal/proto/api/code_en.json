@@ -1,0 +1,7 @@
+{
+  "10000": "params error",
+  "20000": "unauthorized, please login first",
+  "30000": "permission denied",
+  "40000": "data not found",
+  "50000": "internal server error, please try again later"
+}

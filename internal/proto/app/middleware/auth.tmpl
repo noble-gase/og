@@ -14,7 +14,7 @@ func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		iidentityId := identity.GetIdentityId(r.Context())
 		if iidentityId == 0 {
-			result.Err({{.ApiName}}.ErrAuth).JSON(w, r)
+			result.Err({{.ApiName}}.Code_ErrAuth).JSON(w, r)
 			return
 		}
 		// TODO ...

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"google.golang.org/genproto/googleapis/api/annotations"
@@ -14,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.0.3"
+	version = "v0.0.4"
 	suffix  = "_http.pb.go"
 )
 
@@ -38,21 +40,22 @@ func main() {
 			}
 			genServiceFile(p, f)
 			genCodeFile(p, f)
+			genCodeJson(p, f)
 		}
 		return nil
 	})
 }
 
 const (
-	ctxPkg     = protogen.GoImportPath("context")
-	errorPkg   = protogen.GoImportPath("errors")
-	httpPkg    = protogen.GoImportPath("net/http")
-	chiPkg     = protogen.GoImportPath("github.com/go-chi/chi/v5")
-	contribPkg = protogen.GoImportPath("github.com/noble-gase/ne")
-	resultPkg  = protogen.GoImportPath("github.com/noble-gase/ne/result")
-	restyPkg   = protogen.GoImportPath("github.com/go-resty/resty/v2")
-	protosPkg  = protogen.GoImportPath("github.com/noble-gase/ne/protos")
-	codesPkg   = protogen.GoImportPath("github.com/noble-gase/ne/codes")
+	ctxPkg    = protogen.GoImportPath("context")
+	errorPkg  = protogen.GoImportPath("errors")
+	httpPkg   = protogen.GoImportPath("net/http")
+	chiPkg    = protogen.GoImportPath("github.com/go-chi/chi/v5")
+	nePkg     = protogen.GoImportPath("github.com/noble-gase/ne")
+	resultPkg = protogen.GoImportPath("github.com/noble-gase/ne/result")
+	restyPkg  = protogen.GoImportPath("github.com/go-resty/resty/v2")
+	protosPkg = protogen.GoImportPath("github.com/noble-gase/ne/protos")
+	codesPkg  = protogen.GoImportPath("github.com/noble-gase/ne/codes")
 )
 
 func protocVersion(p *protogen.Plugin) string {
@@ -68,9 +71,9 @@ func protocVersion(p *protogen.Plugin) string {
 }
 
 // generateFile generates a `xxx_http.pb.go` file containing HTTP service definitions.
-func genServiceFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
+func genServiceFile(p *protogen.Plugin, f *protogen.File) {
 	if len(f.Services) == 0 {
-		return nil
+		return
 	}
 	filename := f.GeneratedFilenamePrefix + suffix
 	gf := p.NewGeneratedFile(filename, f.GoImportPath)
@@ -87,7 +90,6 @@ func genServiceFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFil
 	gf.P("package ", f.GoPackageName)
 	gf.P()
 	genFileContent(f, gf)
-	return gf
 }
 
 // generateFileContent generates the HTTP service definitions, excluding the package statement.
@@ -197,8 +199,8 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("ctx := r.Context()")
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
-		gf.P("if err := ", contribPkg.Ident("BindProto"), "(r, req); err != nil {")
-		gf.P(resultPkg.Ident("Err"), `(ErrParams.New(err.Error())).JSON(w, r)`)
+		gf.P("if err := ", nePkg.Ident("BindProto"), "(r, req); err != nil {")
+		gf.P(resultPkg.Ident("Err"), "(", codesPkg.Ident("FromError"), "(err)).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")
 		gf.P("// call service")
@@ -286,11 +288,11 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("}")
 		if !isGetMethod {
 			gf.P("// set request body")
-			gf.P("switch ", contribPkg.Ident("ContentType"), "(req.Header) {")
-			gf.P("case ", contribPkg.Ident("ContentForm"), ",", contribPkg.Ident("ContentMultipartForm"), ":")
+			gf.P("switch ", nePkg.Ident("ContentType"), "(req.Header) {")
+			gf.P("case ", nePkg.Ident("ContentForm"), ",", nePkg.Ident("ContentMultipartForm"), ":")
 			gf.P("req.SetFormDataFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
 			gf.P("default:")
-			gf.P("req.SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").SetBody(in)")
+			gf.P("req.SetHeader(", nePkg.Ident("HeaderContentType"), ", ", nePkg.Ident("ContentJSON"), ").SetBody(in)")
 			gf.P("}")
 		}
 		gf.P("// send request")
@@ -325,9 +327,9 @@ func getHttpRouter(rule *annotations.HttpRule) (string, string) {
 }
 
 // genCodeFile generates a `code.pb.go` file containing HTTP service definitions.
-func genCodeFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
+func genCodeFile(p *protogen.Plugin, f *protogen.File) {
 	if !strings.HasSuffix(f.Desc.Path(), "code.proto") || len(f.Enums) == 0 {
-		return nil
+		return
 	}
 	filename := f.GeneratedFilenamePrefix + suffix
 	gf := p.NewGeneratedFile(filename, f.GoImportPath)
@@ -344,7 +346,6 @@ func genCodeFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
 	gf.P("package ", f.GoPackageName)
 	gf.P()
 	genCodeContent(f, gf)
-	return gf
 }
 
 // genCodeContent generates the HTTP code definitions, excluding the package statement.
@@ -354,10 +355,16 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 		for _, v := range e.Values {
 			msg := strings.ToLower(string(v.Desc.Name()))
 			if comment := string(v.Comments.Trailing); len(comment) != 0 {
-				msg = strings.TrimSpace(comment)
+				arr := strings.Split(comment, ";")
+				for _, s := range arr {
+					if index := strings.Index(s, "="); index != -1 {
+						msg = strings.TrimSpace(s[index+1:])
+						break
+					}
+				}
 			}
 			name := case2camel(string(v.Desc.Name()))
-			gf.P(name, " = ", codesPkg.Ident("New"), "(int(Code_", v.Desc.Name(), `), "`, msg, `")`)
+			gf.P(e.Desc.Name(), "_", name, " = ", codesPkg.Ident("New"), "(int(", e.Desc.Name(), "_", v.Desc.Name(), `), "`, msg, `")`)
 		}
 		gf.P()
 	}
@@ -366,11 +373,44 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 	for _, e := range f.Enums {
 		for _, v := range e.Values {
 			name := case2camel(string(v.Desc.Name()))
-			gf.P("func Is", name, "(err error) bool {")
-			gf.P("return ", codesPkg.Ident("Is"), "(err, ", name, ")")
+			gf.P("func Is_", e.Desc.Name(), "_", name, "(err error) bool {")
+			gf.P("return ", codesPkg.Ident("Is"), "(err, ", e.Desc.Name(), "_", name, ")")
 			gf.P("}")
 			gf.P()
 		}
+	}
+}
+
+func genCodeJson(p *protogen.Plugin, f *protogen.File) {
+	if !strings.HasSuffix(f.Desc.Path(), "code.proto") || len(f.Enums) == 0 {
+		return
+	}
+
+	m := make(map[string]map[string]string) // map[lang][code]msg
+
+	for _, e := range f.Enums {
+		for _, v := range e.Values {
+			key := strconv.Itoa(int(v.Desc.Number()))
+			if comment := string(v.Comments.Trailing); len(comment) != 0 {
+				arr := strings.Split(comment, ";")
+				for _, s := range arr {
+					if index := strings.Index(s, "="); index != -1 {
+						lang := strings.TrimSpace(s[:index])
+						msg := strings.TrimSpace(s[index+1:])
+						if _, ok := m[lang]; !ok {
+							m[lang] = make(map[string]string)
+						}
+						m[lang][key] = msg
+					}
+				}
+			}
+		}
+	}
+
+	for lang, codes := range m {
+		b, _ := json.MarshalIndent(codes, "", "  ")
+		gf := p.NewGeneratedFile("code_"+lang+".json", f.GoImportPath)
+		gf.P(string(b))
 	}
 }
 
