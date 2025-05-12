@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.0.4"
+	version = "v0.1.0"
 	suffix  = "_http.pb.go"
 )
 
