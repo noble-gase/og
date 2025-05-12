@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -82,9 +81,13 @@ import (
 
 {{- range $s := .Structs }}
 
+{{- with $s.Fields }}
+{{- $len := len . }}
+{{- if gt $len 0 }}
+
 // Get methods for {{ $s.Name }}
 
-{{- range $s.Fields }}
+{{- range . }}
 
 func ({{ $s.Receiver }} *{{ $s.Name }}) Get{{ .Name }}() {{ .Type }} {
 	if {{ $s.Receiver }} != nil {
@@ -101,32 +104,36 @@ func ({{ $s.Receiver }} *{{ $s.Name }}) Get{{ .Name }}() {{ .Type }} {
 {{- end }}
 
 {{- end }}
+
+{{- end }}
+
+{{- end }}
 `
 
 func main() {
+	var paths []string
+
 	cmd := &cobra.Command{
 		Use:     "gg",
 		Short:   "生成Get方法^_^",
 		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
-		Version: "v0.0.3",
+		Version: "v0.1.0",
 		Example: internal.CmdExamples(
-			"gg .",
-			"gg a/b/c",
-			"gg xxx.go",
-			"//go:generate gg xxx.go",
+			"gg --path=.",
+			"gg --path=a/b/c",
+			"gg --path=xxx.go",
+			"//go:generate gg --path=.",
+			"//go:generate gg --path=a/b/c",
+			"//go:generate gg --path=xxx.go",
 		),
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return errors.New("usage: gg <source file>")
-			}
-			return nil
-		},
 		Run: func(cmd *cobra.Command, args []string) {
-			for _, path := range args {
+			for _, path := range paths {
 				genGetter(filepath.Clean(path))
 			}
 		},
 	}
+	// 注册参数
+	cmd.Flags().StringSliceVarP(&paths, "path", "P", nil, "文件/目录")
 	// 执行
 	_ = cmd.Execute()
 }
