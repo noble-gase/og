@@ -119,9 +119,12 @@ func main() {
 		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
 		Version: "v0.1.0",
 		Example: internal.CmdExamples(
+			"👉 -- CLI --",
 			"gg --path=.",
 			"gg --path=a/b/c",
 			"gg --path=xxx.go",
+			"",
+			"👉 -- go:generate --",
 			"//go:generate gg --path=.",
 			"//go:generate gg --path=a/b/c",
 			"//go:generate gg --path=xxx.go",
