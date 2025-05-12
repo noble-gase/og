@@ -17,7 +17,7 @@ func main() {
 		Use:     "og",
 		Short:   "项目脚手架",
 		Long:    "项目脚手架，快速创建Go项目",
-		Version: "v0.0.5",
+		Version: "v0.1.0",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
@@ -49,24 +49,21 @@ func new() *cobra.Command {
 			"-- HTTP --",
 			"og new .",
 			"og new demo",
-			"og new demo --mod=xxx.yyy.com",
-			"og new demo --apps=foo,bar",
-			"og new demo --apps=foo --apps=bar",
-			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar",
+			"og new demo --mod=xxx.com/demo",
+			"og new demo --app=foo --app=bar",
+			"og new demo --mod=xxx.com/demo --app=foo --app=bar",
 			"-- HTTP(proto) --",
 			"og new . --proto",
 			"og new demo --proto",
-			"og new demo --mod=xxx.yyy.com --proto",
-			"og new demo --apps=foo,bar --proto",
-			"og new demo --apps=foo --apps=bar --proto",
-			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar --proto",
+			"og new demo --mod=xxx.com/demo --proto",
+			"og new demo --app=foo --app=bar --proto",
+			"og new demo --mod=xxx.com/demo --app=foo --app=bar --proto",
 			"-- gRPC --",
 			"og new . --grpc",
 			"og new demo --grpc",
-			"og new demo --mod=xxx.yyy.com --grpc",
-			"og new demo --apps=foo,bar --grpc",
-			"og new demo --apps=foo --apps=bar --grpc",
-			"og new demo --mod=xxx.yyy.com --apps=foo --apps=bar --grpc",
+			"og new demo --mod=xxx.com/demo --grpc",
+			"og new demo --app=foo --app=bar --grpc",
+			"og new demo --mod=xxx.com/demo --app=foo --app=bar --grpc",
 		),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
@@ -127,7 +124,7 @@ func new() *cobra.Command {
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "创建gRPC项目")
 	cmd.Flags().BoolVar(&proto, "proto", false, "使用proto定义API")
 	cmd.Flags().StringVar(&mod, "mod", "", "设置Module名称(默认为项目名称)")
-	cmd.Flags().StringSliceVar(&apps, "apps", []string{}, "创建多应用项目")
+	cmd.Flags().StringSliceVar(&apps, "app", nil, "创建多应用项目")
 	return cmd
 }
 

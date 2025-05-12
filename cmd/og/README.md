@@ -44,10 +44,10 @@ og new demo --mod=xxx.com/demo # 指定module名称
 ##### 多应用
 
 ```shell
-og new . --apps=foo,bar # 在当前目录初始化项目
-og new demo --apps=foo,bar # 创建demo项目
-og new demo --mod=xxx.com/demo --apps=foo,bar
-og new demo --mod=xxx.com/demo --apps=foo --apps=bar
+og new . --app=foo,bar # 在当前目录初始化项目
+og new demo --app=foo,bar # 创建demo项目
+og new demo --mod=xxx.com/demo --app=foo,bar
+og new demo --mod=xxx.com/demo --app=foo --app=bar
 .
 ├── cmd
 │   ├── foo
@@ -117,10 +117,10 @@ og new demo --mod=xxx.com/demo --proto # 指定module名称
 ##### 多应用
 
 ```shell
-og new . --apps=foo,bar --proto # 在当前目录初始化项目
-og new demo --apps=foo,bar --proto # 创建demo项目
-og new demo --mod=xxx.com/demo --apps=foo,bar --proto
-og new demo --mod=xxx.com/demo --apps=foo --apps=bar --proto
+og new . --app=foo,bar --proto # 在当前目录初始化项目
+og new demo --app=foo,bar --proto # 创建demo项目
+og new demo --mod=xxx.com/demo --app=foo,bar --proto
+og new demo --mod=xxx.com/demo --app=foo --app=bar --proto
 .
 ├── api
 │   ├── bar
@@ -197,10 +197,10 @@ og new demo --mod=xxx.com/demo --grpc # 指定module名称
 ##### 多应用
 
 ```shell
-og new . --apps=foo,bar --grpc # 在当前目录初始化项目
-og new demo --apps=foo,bar --grpc # 创建demo项目
-og new demo --mod=xxx.com/demo --apps=foo,bar --grpc
-og new demo --mod=xxx.com/demo --apps=foo --apps=bar --grpc
+og new . --app=foo,bar --grpc # 在当前目录初始化项目
+og new demo --app=foo,bar --grpc # 创建demo项目
+og new demo --mod=xxx.com/demo --app=foo,bar --grpc
+og new demo --mod=xxx.com/demo --app=foo --app=bar --grpc
 .
 ├── api
 │   ├── bar
