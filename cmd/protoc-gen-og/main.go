@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.1.0"
+	version = "v0.1.1"
 	suffix  = "_http.pb.go"
 )
 
@@ -51,7 +51,7 @@ const (
 	errorPkg  = protogen.GoImportPath("errors")
 	httpPkg   = protogen.GoImportPath("net/http")
 	chiPkg    = protogen.GoImportPath("github.com/go-chi/chi/v5")
-	nePkg     = protogen.GoImportPath("github.com/noble-gase/ne")
+	helperPkg = protogen.GoImportPath("github.com/noble-gase/ne/helper")
 	resultPkg = protogen.GoImportPath("github.com/noble-gase/ne/result")
 	restyPkg  = protogen.GoImportPath("github.com/go-resty/resty/v2")
 	protosPkg = protogen.GoImportPath("github.com/noble-gase/ne/protos")
@@ -199,7 +199,7 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("ctx := r.Context()")
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
-		gf.P("if err := ", nePkg.Ident("BindProto"), "(r, req); err != nil {")
+		gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req); err != nil {")
 		gf.P(resultPkg.Ident("Err"), "(", codesPkg.Ident("FromError"), "(err)).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")
@@ -288,11 +288,11 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("}")
 		if !isGetMethod {
 			gf.P("// set request body")
-			gf.P("switch ", nePkg.Ident("ContentType"), "(req.Header) {")
-			gf.P("case ", nePkg.Ident("ContentForm"), ",", nePkg.Ident("ContentMultipartForm"), ":")
+			gf.P("switch ", helperPkg.Ident("ContentType"), "(req.Header) {")
+			gf.P("case ", helperPkg.Ident("ContentForm"), ",", helperPkg.Ident("ContentMultipartForm"), ":")
 			gf.P("req.SetFormDataFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
 			gf.P("default:")
-			gf.P("req.SetHeader(", nePkg.Ident("HeaderContentType"), ", ", nePkg.Ident("ContentJSON"), ").SetBody(in)")
+			gf.P("req.SetHeader(", helperPkg.Ident("HeaderContentType"), ", ", helperPkg.Ident("ContentJSON"), ").SetBody(in)")
 			gf.P("}")
 		}
 		gf.P("// send request")

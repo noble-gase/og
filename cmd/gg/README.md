@@ -35,7 +35,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/steps"
 )
 
 //go:generate gg demo.go
@@ -54,7 +54,7 @@ type Demo[T any, E comparable] struct {
 	FieldCode      Code
 	FieldCtx       context.Context
 	FieldTime      time.Time
-	FieldStep      ne.Step
+	FieldStep      steps.Step
 	FieldGenT      T
 	FieldGenE      E
 }
@@ -69,7 +69,7 @@ package demo
 
 import (
 	"context"
-	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/steps"
 	"time"
 )
 
@@ -152,11 +152,11 @@ func (d *Demo[T, E]) GetFieldTime() time.Time {
 	return time.Time{}
 }
 
-func (d *Demo[T, E]) GetFieldStep() ne.Step {
+func (d *Demo[T, E]) GetFieldStep() steps.Step {
 	if d != nil {
 		return d.FieldStep
 	}
-	return ne.Step{}
+	return steps.Step{}
 }
 
 func (d *Demo[T, E]) GetFieldGenT() T {

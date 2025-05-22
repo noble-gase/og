@@ -31,26 +31,28 @@ func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error
 		return
 	}
 
+	rollback := func(err error) error {
+		if e := tx.Rollback(); e != nil {
+			err = fmt.Errorf("%w; rollback: %w", err, e)
+		}
+		return err
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("transaction panic recovered: %+v", r)
-			if err_ := tx.Rollback(); err_ != nil {
-				err = fmt.Errorf("%w: rollback: %w", err, err_)
-			}
-			err = fmt.Errorf("%w\n%s", err, string(debug.Stack()))
+			// if panic, should rollback
+			e := fmt.Errorf("transaction panic recovered: %+v", r)
+			err = fmt.Errorf("%w\n%s", rollback(e), string(debug.Stack()))
 		}
 	}()
 
-	if err = fn(ctx, tx); err != nil {
-		if err_ := tx.Rollback(); err_ != nil {
-			err = fmt.Errorf("%w: transaction rollback: %w", err, err_)
-		}
+	if e := fn(ctx, tx); e != nil {
+		err = rollback(e)
 		return
 	}
 
-	if _err = tx.Commit(); _err != nil {
-		err = fmt.Errorf("transaction commit: %w", _err)
-		return
+	if e := tx.Commit(); e != nil {
+		err = fmt.Errorf("commit: %w", e)
 	}
 	return
 }

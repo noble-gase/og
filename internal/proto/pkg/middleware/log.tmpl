@@ -10,7 +10,7 @@ import (
 	"{{.Module}}/pkg/log"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/helper"
 	"github.com/noble-gase/ne/result"
 	"github.com/tidwall/pretty"
 	"go.uber.org/zap"
@@ -75,7 +75,7 @@ func Log(next http.Handler) http.Handler {
 			if size > MaxBodyLogSize {
 				body = string(b[:MaxBodyLogSize])
 			} else {
-				if ne.ContentType(r.Header) == ne.ContentJSON {
+				if helper.ContentType(r.Header) == helper.ContentJSON {
 					body = string(pretty.Ugly(b))
 				} else {
 					body = string(b)

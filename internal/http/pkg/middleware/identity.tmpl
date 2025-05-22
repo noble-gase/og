@@ -5,15 +5,15 @@ import (
 
 	"{{.Module}}/pkg/identity"
 
-	"github.com/noble-gase/ne"
 	"github.com/noble-gase/ne/conv"
+	"github.com/noble-gase/ne/helper"
 	"github.com/noble-gase/ne/metadata"
 )
 
 // Identity parse identity into context
 func Identity(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get(ne.HeaderAuthorization)
+		token := r.Header.Get(helper.HeaderAuthorization)
 		if len(token) == 0 {
 			next.ServeHTTP(w, r)
 			return

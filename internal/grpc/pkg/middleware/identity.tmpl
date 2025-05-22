@@ -5,8 +5,8 @@ import (
 
 	"{{.Module}}/pkg/identity"
 
-	"github.com/noble-gase/ne"
 	"github.com/noble-gase/ne/conv"
+	"github.com/noble-gase/ne/helper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -17,7 +17,7 @@ func Identity(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, han
 		md = metadata.Pairs()
 	}
 
-	token := md.Get(ne.HeaderAuthorization)
+	token := md.Get(helper.HeaderAuthorization)
 	if len(token) == 0 {
 		return handler(ctx, req)
 	}

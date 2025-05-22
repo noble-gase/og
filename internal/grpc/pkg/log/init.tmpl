@@ -1,16 +1,16 @@
 package log
 
 import (
-	"github.com/noble-gase/ne"
+	"github.com/noble-gase/ne/logs"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
-var logger = ne.DebugLogger()
+var logger = logs.Debug()
 
 // Init 初始化日志实例(如有多个实例，在此方法中初始化)
 func Init() {
-	cfg := &ne.LogConfig{
+	cfg := &logs.Config{
 		Filename: viper.GetString("log.path"),
 	}
 
@@ -23,5 +23,5 @@ func Init() {
 		cfg.Stderr = cast.ToBool(opts["stderr"])
 	}
 
-	logger = ne.NewLogger(cfg)
+	logger = logs.New(cfg)
 }

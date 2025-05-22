@@ -17,7 +17,7 @@ func main() {
 		Use:     "og",
 		Short:   "项目脚手架",
 		Long:    "项目脚手架，快速创建Go项目",
-		Version: "v0.1.0",
+		Version: "v0.1.1",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
