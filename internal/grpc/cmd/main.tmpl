@@ -1,11 +1,7 @@
 package main
 
-import (
-	"{{.Module}}/internal/{{.AppPkg}}/cmd"
-	"{{.Module}}/internal/{{.AppPkg}}/config"
-)
+import "{{.Module}}/internal/{{.AppPkg}}/cmd"
 
 func main() {
-	defer config.CleanUp()
 	cmd.Init()
 }

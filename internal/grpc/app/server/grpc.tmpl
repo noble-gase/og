@@ -33,12 +33,12 @@ func ServeGrpc(ctx context.Context, srv *grpc.Server) {
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatal(ctx, "net.Listen failed", zap.Error(err))
+		log.Fatal(ctx, "net.Listen failed", zap.Error(err), zap.String("addr", addr))
 	}
 	// Serve gRPC server
-	log.Info(ctx, "Serving gRPC OK", zap.String("port", addr))
+	log.Info(ctx, "gRPC server start", zap.String("addr", addr))
 	if err := srv.Serve(lis); err != nil {
-		log.Fatal(ctx, "grpc serve failed", zap.Error(err))
+		log.Fatal(ctx, "gRPC serving error", zap.Error(err))
 	}
 }
 

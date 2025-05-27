@@ -31,7 +31,10 @@ var root = &cobra.Command{
 	Annotations: map[string]string{},
 	Version:     "v1.0.0",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		config.Init(context.Background(), cfgFile)
+		config.Init(cfgFile)
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		config.CleanUp()
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// make sure we have a working tempdir in minimal containers, because:
@@ -39,11 +42,11 @@ var root = &cobra.Command{
 		if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
 			log.Error(context.Background(), "create temp dir failed", zap.Error(err))
 		}
-		serving(context.Background())
+		serving()
 	},
 }
 
-func serving(ctx context.Context) {
+func serving() {
 	// 跨域设置
 	withCors := cors.New(cors.ACEH(trace.TraceId))
 	// 创建路由
@@ -54,34 +57,38 @@ func serving(ctx context.Context) {
 	r.Mount("/debug", chi_middleware.Profiler())
 	// 注册路由
 	router.App(r)
+
 	// 创建服务
 	srv := &http.Server{
 		Addr:         ":" + viper.GetString("app.port"),
 		Handler:      r,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  10 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 20 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
-	// 创建一个通道来监听信号
-	quit := make(chan os.Signal, 1)
-	// 监听特定的系统信号
-	signal.Notify(quit, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+
+	// 清理资源
+	defer config.CleanUp()
+
+	// 信号监听
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	defer stop()
+
 	// 启动服务
-	go func() {
-		log.Info(ctx, "Serving OK", zap.String("port", srv.Addr))
+	go func(ctx context.Context) {
+		log.Info(ctx, "server start", zap.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(context.Background(), "serving error", zap.Error(err))
+			log.Error(ctx, "serving error", zap.Error(err))
 		}
-	}()
-	// 处理信号
-	sig := <-quit
-	log.Warn(context.TODO(), "Received Signal", zap.String("signal", sig.String()))
-	// 关闭服务
-	if err := srv.Shutdown(ctx); err != nil {
+	}(ctx)
+
+	// 阻塞直到接收到信号
+	<-ctx.Done()
+
+	// 关闭服务(设定超时10秒优雅关闭)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error(ctx, "server shutdown failed", zap.Error(err))
 	}
-	// 执行清理操作
-	config.CleanUp()
-	// 退出程序
-	os.Exit(0)
 }

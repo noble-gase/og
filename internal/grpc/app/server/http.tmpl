@@ -71,9 +71,9 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn) *http.Server {
 }
 
 func ServeHttp(ctx context.Context, srv *http.Server) {
-	log.Info(ctx, "Serving HTTP OK", zap.String("port", srv.Addr))
+	log.Info(ctx, "HTTP server start", zap.String("addr", srv.Addr))
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(ctx, "HTTP ListenAndServe failed", zap.Error(err))
+		log.Fatal(ctx, "HTTP serving error", zap.Error(err))
 	}
 }
 

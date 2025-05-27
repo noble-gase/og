@@ -10,7 +10,7 @@ import (
 
 func TestMain(m *testing.M) {
 	// 初始化
-	config.Init(context.Background(), "../../config.toml")
+	config.Init("../../config.toml")
 	// 执行测试
 	m.Run()
 	// 关闭资源
@@ -18,9 +18,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestHello(t *testing.T) {
+	ctx := context.Background()
+
 	req := &ReqHello{
 		Name: "world",
 	}
-	ret := Hello(context.Background(), req)
+	ret := Hello(ctx, req)
 	fmt.Println("[Result] ---", ret)
 }

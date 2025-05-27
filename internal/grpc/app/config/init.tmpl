@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"sync"
 
 	"{{.Module}}/pkg/log"
 
@@ -10,7 +11,9 @@ import (
 )
 
 // Init 初始化资源
-func Init(ctx context.Context, cfgFile string) {
+func Init(cfgFile string) {
+	ctx := context.Background()
+
 	// 初始化配置
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
@@ -24,10 +27,14 @@ func Init(ctx context.Context, cfgFile string) {
 	// ent.Init(ctx, "db")
 }
 
+var once sync.Once
+
 // CleanUp 清理资源
 func CleanUp() {
 	// TODO: 资源Close（如：数据库连接等）
-	// if ent.DB != nil {
-	// 	_ = ent.DB.Close()
-	// }
+	// once.Do(func() {
+	// 	if ent.DB != nil {
+	// 		_ = ent.DB.Close()
+	// 	}
+	// })
 }
