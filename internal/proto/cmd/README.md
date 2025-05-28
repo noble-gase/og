@@ -1,4 +1,4 @@
-# App - {{.Module}}
+# App - {{.AppName}}
 
 1. 配置文件 `config.toml`
 2. 执行 `buf generate` 编译proto文件

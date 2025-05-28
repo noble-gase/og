@@ -12,20 +12,27 @@ import (
 	"go.uber.org/zap"
 )
 
-var DB *Client
+var client *Client
+
+func DB(ctx context.Context) *Client {
+	if client == nil {
+		log.Panic(ctx, "db client is nil (forgotten initialize?)")
+	}
+	return client
+}
 
 func Init(ctx context.Context, cfgName string) {
 	driver, err := db.InitDBDriver(dialect.MySQL, cfgName)
 	if err != nil {
 		log.Panic(ctx, "数据库初始化失败", zap.Error(err))
 	}
-	DB = NewClient(Driver(driver))
+	client = NewClient(Driver(driver))
 }
 
 // Transaction Executes ent transaction with callback function.
 // The provided context is used until the transaction is committed or rolledback.
 func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error) (err error) {
-	tx, _err := DB.Tx(ctx)
+	tx, _err := client.Tx(ctx)
 	if _err != nil {
 		err = fmt.Errorf("begin transaction: %w", _err)
 		return
@@ -57,8 +64,9 @@ func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error
 	return
 }
 
-func Close() {
-	if DB != nil {
-		_ = DB.Close()
+func Close() error {
+	if client != nil {
+		return client.Close()
 	}
+	return nil
 }

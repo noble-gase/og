@@ -1,8 +1,9 @@
-package db
+package cache
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -11,12 +12,19 @@ import (
 )
 
 var (
-	Client  *redis.Client
-	Cluster *redis.ClusterClient
+	client  *redis.Client
+	cluster *redis.ClusterClient
 )
 
-// InitClient 初始化Redis客户端
-func InitClient(ctx context.Context, cfgName string) error {
+func Client(ctx context.Context) *redis.Client {
+	if client == nil {
+		log.Panic(ctx, "redis client is nil (forgotten initialize?)")
+	}
+	return client
+}
+
+// Init 初始化Redis客户端
+func Init(ctx context.Context, cfgName string) error {
 	cfg := &redis.Options{
 		Addr: viper.GetString(fmt.Sprintf("%s.addr", cfgName)),
 	}
@@ -44,16 +52,23 @@ func InitClient(ctx context.Context, cfgName string) error {
 		cfg.DisableIdentity = cast.ToBool(opts["disable_identity"])
 	}
 
-	Client = redis.NewClient(cfg)
+	client = redis.NewClient(cfg)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	// verify connection
-	if err := Client.Ping(ctx).Err(); err != nil {
-		_ = Client.Close()
+	if err := client.Ping(ctx).Err(); err != nil {
+		_ = client.Close()
 		return err
 	}
 	return nil
+}
+
+func Cluster(ctx context.Context) *redis.ClusterClient {
+	if cluster == nil {
+		log.Panic(ctx, "redis cluster client is nil (forgotten initialize?)")
+	}
+	return cluster
 }
 
 // InitCluster 初始化Redis集群客户端
@@ -88,13 +103,13 @@ func InitCluster(ctx context.Context, cfgName string) error {
 		cfg.DisableIdentity = cast.ToBool(opts["disable_indentity"])
 	}
 
-	Cluster = redis.NewClusterClient(cfg)
+	cluster = redis.NewClusterClient(cfg)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	// verify connection
-	if err := Cluster.Ping(ctx).Err(); err != nil {
-		_ = Cluster.Close()
+	if err := cluster.Ping(ctx).Err(); err != nil {
+		_ = cluster.Close()
 		return err
 	}
 	return nil

@@ -10,43 +10,48 @@ import (
 	"{{.Module}}/internal/{{.AppPkg}}/server"
 	"{{.Module}}/pkg/log"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/urfave/cli/v3"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var cfgFile string
-
-var root = &cobra.Command{
-	Use:         "{{.Module}}",
-	Short:       "Go App",
-	Long:        "Go App (build with cobra | viper | zap | ent | grpc)",
-	Annotations: map[string]string{},
-	Version:     "v1.0.0",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		config.Init(cfgFile)
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		config.CleanUp()
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		// make sure we have a working tempdir in minimal containers, because:
-		// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
-		if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
-			log.Error(context.Background(), "create temp dir failed", zap.Error(err))
-		}
-		serving()
-	},
+func root() *cli.Command {
+	return &cli.Command{
+		Version:     "v1.0.0",
+		Description: "Go App (build with og)",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "config",
+				Aliases: []string{"C"},
+				Usage:   "设置配置文件",
+				Value:   "config.toml",
+			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			config.Init(ctx, cmd.String("config"))
+			return ctx, nil
+		},
+		After: func(ctx context.Context, cmd *cli.Command) error {
+			config.CleanUp(ctx)
+			return nil
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			// make sure we have a working tempdir in minimal containers, because:
+			// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
+			if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
+				log.Error(ctx, "create temp dir failed", zap.Error(err))
+			}
+			serving(ctx)
+			return nil
+		},
+	}
 }
 
-func serving() {
-	// 清理资源
-	defer config.CleanUp()
-
+func serving(ctx context.Context) {
 	// 信号监听
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
 	// serve grpc
@@ -62,7 +67,7 @@ func serving() {
 	go server.ServeHttp(ctx, httpSrv)
 
 	// 阻塞直到接收到信号
-	<-ctx.Done()
+	<-sigCtx.Done()
 
 	// 关闭http服务
 	if err := httpSrv.Shutdown(ctx); err != nil {

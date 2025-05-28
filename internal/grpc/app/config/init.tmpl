@@ -11,9 +11,7 @@ import (
 )
 
 // Init 初始化资源
-func Init(cfgFile string) {
-	ctx := context.Background()
-
+func Init(ctx context.Context, cfgFile string) {
 	// 初始化配置
 	viper.SetConfigFile(cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
@@ -30,11 +28,11 @@ func Init(cfgFile string) {
 var once sync.Once
 
 // CleanUp 清理资源
-func CleanUp() {
-	// TODO: 资源Close（如：数据库连接等）
+func CleanUp(ctx context.Context) {
 	// once.Do(func() {
-	// 	if ent.DB != nil {
-	// 		_ = ent.DB.Close()
+	// 	// 关闭数据库连接
+	// 	if err := ent.Close(); err != nil {
+	// 		log.Error(ctx, "db close failed", zap.Error(err))
 	// 	}
 	// })
 }

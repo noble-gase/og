@@ -2,19 +2,25 @@ package cmd
 
 import (
 	"context"
+	"os"
 
 	"{{.Module}}/pkg/log"
 
+	"github.com/urfave/cli/v3"
 	"go.uber.org/zap"
 )
 
 func Init() {
-	// 注册全局参数
-	root.PersistentFlags().StringVarP(&cfgFile, "config", "C", "config.toml", "设置配置文件")
+	cmd := root()
+
 	// 注册子命令
-	root.AddCommand(cmdHello())
+	cmd.Commands = []*cli.Command{
+		hello(),
+	}
+
 	// 执行命令
-	if err := root.Execute(); err != nil {
-		log.Error(context.Background(), "cmd execute failed", zap.Error(err))
+	ctx := context.Background()
+	if err := cmd.Run(ctx, os.Args); err != nil {
+		log.Error(ctx, "cmd run failed", zap.Error(err))
 	}
 }

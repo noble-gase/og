@@ -6,7 +6,7 @@ Go gRPC项目快速开发脚手架
 - Redis使用 [go-redis](https://github.com/redis/go-redis)
 - 日志使用 [zap](https://github.com/uber-go/zap)
 - 配置使用 [viper](https://github.com/spf13/viper)
-- 命令行使用 [cobra](https://github.com/spf13/cobra)
+- 命令行使用 [cli](https://github.com/urfave/cli)
 - 工具包使用 [og](https://github.com/noble-gase/ne)
 - 使用 [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway) 同时支持 grpc 和 http 服务
 - http服务支持跨域
