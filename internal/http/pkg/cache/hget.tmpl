@@ -1,0 +1,33 @@
+package cache
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+
+	"github.com/redis/go-redis/v9"
+)
+
+func HGet[T any](ctx context.Context, cli redis.UniversalClient, key string, field string, fn func(ctx context.Context) (T, error)) (T, error) {
+	var ret T
+
+	str, err := cli.HGet(ctx, key, field).Result()
+	if err != nil {
+		if !errors.Is(err, redis.Nil) {
+			return ret, err
+		}
+
+		// 缓存未命中，调用fn获取数据
+		data, _err := fn(ctx)
+		if _err != nil {
+			return ret, _err
+		}
+		// 缓存数据
+		if b, _err := json.Marshal(data); _err == nil {
+			cli.HSet(ctx, key, field, b)
+		}
+		return data, nil
+	}
+	err = json.Unmarshal([]byte(str), &ret)
+	return ret, err
+}

@@ -1,0 +1,63 @@
+package cache
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/spf13/cast"
+	"github.com/spf13/viper"
+)
+
+var client redis.UniversalClient
+
+func Client(ctx context.Context) redis.UniversalClient {
+	if client == nil {
+		log.Panic(ctx, "redis client is nil (forgotten initialize?)")
+	}
+	return client
+}
+
+// Init 初始化Redis客户端
+func Init(ctx context.Context, cfgName string) error {
+	cfg := &redis.UniversalOptions{
+		Addrs: viper.GetStringSlice(fmt.Sprintf("%s.addrs", cfgName)),
+	}
+
+	opts := viper.GetStringMap(fmt.Sprintf("%s.options", cfgName))
+	if len(opts) != 0 {
+		cfg.DB = cast.ToInt(opts["db"])
+		cfg.Username = cast.ToString(opts["username"])
+		cfg.Password = cast.ToString(opts["password"])
+		cfg.DialTimeout = cast.ToDuration(opts["dial_timeout"]) * time.Second
+		cfg.ReadTimeout = cast.ToDuration(opts["read_timeout"]) * time.Second
+		cfg.WriteTimeout = cast.ToDuration(opts["write_timeout"]) * time.Second
+		cfg.PoolSize = cast.ToInt(opts["pool_size"])
+		cfg.PoolTimeout = cast.ToDuration(opts["pool_timeout"]) * time.Second
+		cfg.MinIdleConns = cast.ToInt(opts["min_idle_conns"])
+		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
+		cfg.MaxActiveConns = cast.ToInt(opts["max_active_conns"])
+		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
+		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
+	}
+
+	client = redis.NewUniversalClient(cfg)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+	// verify connection
+	if err := client.Ping(ctx).Err(); err != nil {
+		_ = client.Close()
+		return err
+	}
+	return nil
+}
+
+func CloseAll() error {
+	if client != nil {
+		return client.Close()
+	}
+	return nil
+}

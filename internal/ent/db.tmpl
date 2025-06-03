@@ -22,7 +22,7 @@ func DB(ctx context.Context) *Client {
 }
 
 func Init(ctx context.Context, cfgName string) {
-	driver, err := db.InitDBDriver(dialect.MySQL, cfgName)
+	driver, err := db.InitDriver(dialect.MySQL, cfgName)
 	if err != nil {
 		log.Panic(ctx, "数据库初始化失败", zap.Error(err))
 	}
