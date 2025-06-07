@@ -11,6 +11,10 @@ import (
 func HGet[T any](ctx context.Context, cli redis.UniversalClient, key string, field string, fn func(ctx context.Context) (T, error)) (T, error) {
 	var ret T
 
+	if cli == nil {
+		return ret, ErrClientNil
+	}
+
 	str, err := cli.HGet(ctx, key, field).Result()
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {

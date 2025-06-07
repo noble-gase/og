@@ -16,7 +16,7 @@ var client *Client
 
 func DB(ctx context.Context) *Client {
 	if client == nil {
-		log.Panic(ctx, "db client is nil (forgotten initialize?)")
+		log.Panic(ctx, "ent client is nil (forgotten initialize?)")
 	}
 	return client
 }
@@ -32,6 +32,10 @@ func Init(ctx context.Context, cfgName string) {
 // Transaction Executes ent transaction with callback function.
 // The provided context is used until the transaction is committed or rolledback.
 func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error) (err error) {
+	if client == nil {
+		return errors.New("ent client is nil (forgotten initialize?)")
+	}
+
 	tx, _err := client.Tx(ctx)
 	if _err != nil {
 		err = fmt.Errorf("begin transaction: %w", _err)

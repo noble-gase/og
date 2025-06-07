@@ -12,6 +12,10 @@ import (
 func Get[T any](ctx context.Context, cli redis.UniversalClient, key string, fn func(ctx context.Context) (T, error), ttl time.Duration) (T, error) {
 	var ret T
 
+	if cli == nil {
+		return ret, ErrClientNil
+	}
+
 	str, err := cli.Get(ctx, key).Result()
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {
