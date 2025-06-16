@@ -70,7 +70,9 @@ func serving(ctx context.Context) {
 	<-sigCtx.Done()
 
 	// 关闭http服务
-	if err := httpSrv.Shutdown(ctx); err != nil {
+	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	if err := httpSrv.Shutdown(shutCtx); err != nil {
 		log.Error(ctx, "http server shutdown failed", zap.Error(err))
 	}
 	// 断开grpc连接

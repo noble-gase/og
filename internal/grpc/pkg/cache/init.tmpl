@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -11,8 +10,6 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
-
-var ErrClientNil = errors.New("redis client is nil (forgotten initialize?)")
 
 var client redis.UniversalClient
 

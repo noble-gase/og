@@ -3,6 +3,7 @@ package greeter
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"{{.Module}}/internal/{{.AppPkg}}/config"
@@ -14,9 +15,11 @@ func TestMain(m *testing.M) {
 	// 初始化
 	config.Init(ctx, "TOML配置文件路径")
 	// 执行测试
-	m.Run()
+	code := m.Run()
 	// 关闭资源
 	config.CleanUp(ctx)
+
+	os.Exit(code)
 }
 
 func TestHello(t *testing.T) {

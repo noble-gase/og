@@ -91,7 +91,7 @@ func serving(ctx context.Context) {
 	<-sigCtx.Done()
 
 	// 关闭服务(设定超时10秒优雅关闭)
-	shutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutCtx); err != nil {
 		log.Error(ctx, "server shutdown failed", zap.Error(err))

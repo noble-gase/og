@@ -16,22 +16,30 @@ func HGet[T any](ctx context.Context, cli redis.UniversalClient, key string, fie
 	}
 
 	str, err := cli.HGet(ctx, key, field).Result()
-	if err != nil {
-		if !errors.Is(err, redis.Nil) {
-			return ret, err
-		}
+	if err == nil {
+		_err := json.Unmarshal([]byte(str), &ret)
+		return ret, _err
+	}
+	if !errors.Is(err, redis.Nil) {
+		return ret, err
+	}
 
-		// 缓存未命中，调用fn获取数据
+	// 缓存未命中
+	data, err, _ := sf.Do(key, func() (interface{}, error) {
+		// 调用fn获取数据
 		data, _err := fn(ctx)
 		if _err != nil {
-			return ret, _err
+			sf.Forget(key)
+			return nil, _err
 		}
 		// 缓存数据
 		if b, _err := json.Marshal(data); _err == nil {
-			cli.HSet(ctx, key, field, b)
+			cli.HSet(ctx, key, field, string(b))
 		}
 		return data, nil
+	})
+	if err != nil {
+		return ret, err
 	}
-	err = json.Unmarshal([]byte(str), &ret)
-	return ret, err
+	return data.(T), nil
 }
