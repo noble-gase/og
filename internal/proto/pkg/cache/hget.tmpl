@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func HGet[T any](ctx context.Context, cli redis.UniversalClient, key string, field string, fn func(ctx context.Context) (T, error)) (T, error) {
+func HGet[T any](ctx context.Context, cli redis.UniversalClient, key, field string, fn func(ctx context.Context) (T, error)) (T, error) {
 	var ret T
 
 	if cli == nil {
@@ -25,11 +25,12 @@ func HGet[T any](ctx context.Context, cli redis.UniversalClient, key string, fie
 	}
 
 	// 缓存未命中
-	data, err, _ := sf.Do(key, func() (interface{}, error) {
+	sfKey := key + ":" + field
+	data, err, _ := sf.Do(sfKey, func() (interface{}, error) {
 		// 调用fn获取数据
 		data, _err := fn(ctx)
 		if _err != nil {
-			sf.Forget(key)
+			sf.Forget(sfKey)
 			return nil, _err
 		}
 		// 缓存数据
