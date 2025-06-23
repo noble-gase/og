@@ -246,7 +246,7 @@ func genOutput(root, path string, appname ...string) string {
 	case "dockerun.sh":
 		if len(appname) != 0 {
 			builder.WriteString(appname[0])
-			builder.WriteString("_dockerun.sh")
+			builder.WriteString(".dockerun.sh")
 		} else {
 			builder.WriteString("dockerun.sh")
 		}
