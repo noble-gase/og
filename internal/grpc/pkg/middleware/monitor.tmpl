@@ -12,13 +12,13 @@ var (
 	// 请求次数
 	reqCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "request_count",
-		Help: "The total number of grpc request",
+		Help: "Total number of gRPC requests",
 	}, []string{"method", "status"})
 
 	// 请求时长
 	reqDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "request_duration",
-		Help: "The grpc request latency in seconds",
+		Help: "gRPC request duration (ms)",
 	}, []string{"method", "status"})
 )
 
@@ -38,16 +38,10 @@ func Monitor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 		}
 
 		// 请求次数
-		reqCnt.With(prometheus.Labels{
-			"method": info.FullMethod,
-			"status": status,
-		}).Inc()
+		reqCnt.WithLabelValues(info.FullMethod, status).Inc()
 
 		// 请求时长
-		reqDur.With(prometheus.Labels{
-			"method": info.FullMethod,
-			"status": status,
-		}).Observe(time.Since(now).Seconds())
+		reqDur.WithLabelValues(info.FullMethod, status).Observe(float64(time.Since(now).Milliseconds()))
 	}()
 
 	resp, err = handler(ctx, req)
