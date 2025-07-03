@@ -18,8 +18,9 @@ var (
 
 	// 请求时长
 	reqDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "request_duration",
-		Help: "HTTP request duration (ms)",
+		Name:    "request_duration",
+		Help:    "HTTP request duration (ms)",
+		Buckets: []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000},
 	}, []string{"method", "path", "status"})
 )
 
