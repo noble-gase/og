@@ -9,27 +9,29 @@ import (
 	"{{.Module}}/pkg/log"
 	"{{.Module}}/pkg/middleware"
 
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 func NewGrpcServer(ctx context.Context) *grpc.Server {
 	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		middleware.TraceId,
 		middleware.Recovery,
+		middleware.Monitor,
 		middleware.Log,
 		middleware.Validator,
 	))
 	// 服务注册
 	registerGrpc(srv)
+	// 启用Reflection
+	reflection.Register(srv)
 	return srv
 }
 
-func ServeGrpc(ctx context.Context, srv *grpc.Server) {
-	addr := ":" + viper.GetString("port.grpc")
+func ServeGrpc(ctx context.Context, srv *grpc.Server, addr string) {
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

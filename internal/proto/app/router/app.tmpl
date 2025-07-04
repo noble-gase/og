@@ -10,6 +10,7 @@ import (
 	"{{.Module}}/pkg/middleware"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // register app routes
@@ -21,14 +22,15 @@ func App(r chi.Router) {
 	// 	http.ServeFile(w, r, "favicon.ico")
 	// })
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
 	})
 
 	// prometheus metrics
-	// r.Method(http.MethodGet, "/metrics", promhttp.Handler())
+	r.Method(http.MethodGet, "/metrics", promhttp.Handler())
 
-	r.With(middleware.Log).Group(func(r chi.Router) {
+	r.With(middleware.Monitor, middleware.Log).Group(func(r chi.Router) {
 		{{.ApiName}}.RegisterGreeterServiceHttpServer(r, greeter.New())
 	})
 }

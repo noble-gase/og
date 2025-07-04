@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"{{.Module}}/internal/{{.AppPkg}}/config"
 	"{{.Module}}/internal/{{.AppPkg}}/server"
@@ -54,20 +55,26 @@ func serving(ctx context.Context) {
 	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
+	grpcAddr := ":" + viper.GetString("port.grpc")
+	httpAddr := ":" + viper.GetString("port.http")
+
 	// serve grpc
 	grpcSrv := server.NewGrpcServer(ctx)
-	go server.ServeGrpc(ctx, grpcSrv)
+	go server.ServeGrpc(ctx, grpcSrv, grpcAddr)
+
+	time.Sleep(time.Second)
 
 	// serve http
-	conn, err := grpc.NewClient("0.0.0.0:"+viper.GetString("port.grpc"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Error(ctx, "grpc.NewClient failed", zap.Error(err))
 	}
-	httpSrv := server.NewHttpServer(ctx, conn)
+	httpSrv := server.NewHttpServer(ctx, conn, httpAddr)
 	go server.ServeHttp(ctx, httpSrv)
 
 	// 阻塞直到接收到信号
 	<-sigCtx.Done()
+	log.Info(ctx, "收到终止信号，正在关闭服务...")
 
 	// 关闭http服务
 	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)

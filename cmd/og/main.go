@@ -17,7 +17,7 @@ func main() {
 		Use:     "og",
 		Short:   "项目脚手架",
 		Long:    "项目脚手架，快速创建Go项目",
-		Version: "v0.2.2",
+		Version: "v0.3.0",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
@@ -26,7 +26,7 @@ func main() {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("欢迎使用noble-gase[og]脚手架")
+			fmt.Println("欢迎使用noble-gase[Go]脚手架")
 		},
 	}
 	// 注册命令

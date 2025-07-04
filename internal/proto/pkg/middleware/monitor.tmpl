@@ -13,7 +13,7 @@ var (
 	// 请求次数
 	reqCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "request_count",
-		Help: "Total number of HTTP requests",
+		Help: "HTTP total requests",
 	}, []string{"method", "path", "status"})
 
 	// 请求时长
@@ -36,13 +36,13 @@ func Monitor(next http.Handler) http.Handler {
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		defer func() {
+			duration := time.Since(now)
 			status := strconv.Itoa(ww.Status())
 
 			// 请求次数
 			reqCnt.WithLabelValues(r.Method, r.URL.Path, status).Inc()
-
 			// 请求时长
-			reqDur.WithLabelValues(r.Method, r.URL.Path, status).Observe(float64(time.Since(now).Milliseconds()))
+			reqDur.WithLabelValues(r.Method, r.URL.Path, status).Observe(float64(duration.Milliseconds()))
 		}()
 
 		next.ServeHTTP(ww, r)

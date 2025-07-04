@@ -89,8 +89,9 @@ func serving(ctx context.Context) {
 
 	// 阻塞直到接收到信号
 	<-sigCtx.Done()
+	log.Info(ctx, "收到终止信号，正在关闭服务...")
 
-	// 关闭服务(设定超时10秒优雅关闭)
+	// 关闭服务
 	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutCtx); err != nil {
