@@ -30,7 +30,7 @@ func App(r chi.Router) {
 	// prometheus metrics
 	r.Method(http.MethodGet, "/metrics", promhttp.Handler())
 
-	r.With(middleware.Monitor, middleware.Log).Group(func(r chi.Router) {
+	r.With(middleware.Metrics, middleware.Log).Group(func(r chi.Router) {
 		{{.ApiName}}.RegisterGreeterServiceHttpServer(r, greeter.New())
 	})
 }

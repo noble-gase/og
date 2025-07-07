@@ -14,19 +14,10 @@ Go Web项目快速开发脚手架
 
 ### 前提条件
 
-```sh
-# ent
-go install entgo.io/ent/cmd/ent@latest
-# generate
-og ent
+```shell
+# 安装依赖工具
+sh install.sh
 
-# proto
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
-
-# build
-go install github.com/bufbuild/buf/cmd/buf@latest
-
-# swagger
-go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+# 生成ent模块
+og ent --help
 ```

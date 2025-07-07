@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -ve
+
+# ent
+go install entgo.io/ent/cmd/ent@latest
+
+# proto
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
+
+# build
+go install github.com/bufbuild/buf/cmd/buf@latest
+
+# swagger
+go install github.com/go-swagger/go-swagger/cmd/swagger@latest

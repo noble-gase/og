@@ -20,7 +20,7 @@ func NewGrpcServer(ctx context.Context) *grpc.Server {
 	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		middleware.TraceId,
 		middleware.Recovery,
-		middleware.Monitor,
+		middleware.Metrics,
 		middleware.Log,
 		middleware.Validator,
 	))

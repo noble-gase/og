@@ -29,8 +29,8 @@ func init() {
 	prometheus.MustRegister(reqDur)
 }
 
-// Monitor 监控
-func Monitor(next http.Handler) http.Handler {
+// Metrics 监控指标
+func Metrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().Local()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)

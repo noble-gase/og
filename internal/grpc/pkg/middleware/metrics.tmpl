@@ -28,8 +28,8 @@ func init() {
 	prometheus.MustRegister(reqDur)
 }
 
-// Monitor 监控
-func Monitor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+// Metrics 监控指标
+func Metrics(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	now := time.Now().Local()
 
 	defer func() {
