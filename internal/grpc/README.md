@@ -18,6 +18,9 @@ Go gRPC项目快速开发脚手架
 ### 前提条件
 
 ```shell
+# 安装protoc
+brew install protobuf
+
 # 安装依赖工具
 sh install.sh
 
