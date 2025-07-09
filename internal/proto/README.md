@@ -15,12 +15,12 @@ Go Web项目快速开发脚手架
 ### 前提条件
 
 ```shell
-# 安装protoc
+# 安装 protoc
 brew install protobuf
 
 # 安装依赖工具
 sh install.sh
 
-# 生成ent模块
+# 生成 ent 模块
 og ent --help
 ```

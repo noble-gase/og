@@ -15,9 +15,9 @@ Go Web项目快速开发脚手架
 ### 前提条件
 
 ```sh
-# ent
+# 安装 ent
 go install entgo.io/ent/cmd/ent@latest
 
-# generate
-og ent
+# 生成 ent 模块
+og ent --help
 ```
