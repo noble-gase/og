@@ -9,7 +9,7 @@ go install entgo.io/ent/cmd/ent@latest
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
 
-# build
+# buf
 go install github.com/bufbuild/buf/cmd/buf@latest
 
 # swagger
