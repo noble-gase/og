@@ -72,9 +72,9 @@ og new demo --mod=xxx.com/demo --app=foo --app=bar # 指定module-path
 ├── pkg
 │   └── ...
 ├── bar.dockerfile
-├── bar_dockerun.sh
+├── bar.dockerun.sh
 ├── foo.dockerfile
-├── foo_dockerun.sh
+├── foo.dockerun.sh
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -152,9 +152,9 @@ og new demo --mod=xxx.com/demo --app=foo --app=bar --proto # 指定module-path
 ├── buf.lock
 ├── buf.yaml
 ├── foo.dockerfile
-├── foo_dockerun.sh
+├── foo.dockerun.sh
 ├── bar.dockerfile
-├── bar_dockerun.sh
+├── bar.dockerun.sh
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -229,9 +229,9 @@ og new demo --mod=xxx.com/demo --app=foo --app=bar --grpc # 指定module-path
 ├── buf.lock
 ├── buf.yaml
 ├── foo.dockerfile
-├── foo_dockerun.sh
+├── foo.dockerun.sh
 ├── bar.dockerfile
-├── bar_dockerun.sh
+├── bar.dockerun.sh
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -262,9 +262,9 @@ og app foo bar --grpc # 创建两个gRPC应用 -- foo 和 bar
 │       └── foo
 ├── pkg
 ├── foo.dockerfile
-├── foo_dockerun.sh
+├── foo.dockerun.sh
 ├── bar.dockerfile
-├── bar_dockerun.sh
+├── bar.dockerun.sh
 ├── go.mod
 ├── go.sum
 └── README.md
