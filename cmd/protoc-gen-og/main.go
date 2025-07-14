@@ -150,8 +150,9 @@ func genServerInterface(gf *protogen.GeneratedFile, service *protogen.Service, s
 			continue
 		}
 		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
-		if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		}
+		// if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
+		// 	// TODO ...
+		// }
 		gf.P(m.Comments.Leading, serverSignature(gf, m))
 	}
 	gf.P("}")
@@ -240,8 +241,9 @@ func genClientInterface(gf *protogen.GeneratedFile, service *protogen.Service, s
 			continue
 		}
 		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
-		if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		}
+		// if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
+		// 	// TODO ...
+		// }
 		gf.P(m.Comments.Leading, clientSignature(gf, m))
 	}
 	gf.P("}")
