@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.1.1"
+	version = "v0.1.2"
 	suffix  = "_http.pb.go"
 )
 
@@ -150,9 +150,9 @@ func genServerInterface(gf *protogen.GeneratedFile, service *protogen.Service, s
 			continue
 		}
 		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
-		// if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		// 	// TODO ...
-		// }
+		if v, ok := m.Desc.Options().(*descriptorpb.MethodOptions); ok && v.GetDeprecated() {
+			gf.P("// ", m.GoName, " is deprecated.")
+		}
 		gf.P(m.Comments.Leading, serverSignature(gf, m))
 	}
 	gf.P("}")
@@ -241,9 +241,9 @@ func genClientInterface(gf *protogen.GeneratedFile, service *protogen.Service, s
 			continue
 		}
 		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
-		// if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		// 	// TODO ...
-		// }
+		if v, ok := m.Desc.Options().(*descriptorpb.MethodOptions); ok && v.GetDeprecated() {
+			gf.P("// ", m.GoName, " is deprecated.")
+		}
 		gf.P(m.Comments.Leading, clientSignature(gf, m))
 	}
 	gf.P("}")
