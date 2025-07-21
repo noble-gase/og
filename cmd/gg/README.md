@@ -73,7 +73,7 @@ import (
 	"time"
 )
 
-// Get methods for Demo [T, E]
+// Get methods for Demo[T, E]
 
 func (d *Demo[T, E]) GetFieldInt() int {
 	if d != nil {
