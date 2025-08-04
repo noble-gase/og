@@ -2,18 +2,16 @@ package middleware
 
 import (
 	"context"
+	"log/slog"
 	"runtime/debug"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
-
-	"{{.Module}}/pkg/log"
 )
 
 func Recovery(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error(ctx, "server panic recovered", zap.Any("request", req), zap.Any("err", err), zap.String("stack", string(debug.Stack())))
+			slog.ErrorContext(ctx, "server panic recovered", slog.Any("request", req), slog.Any("err", err), slog.String("stack", string(debug.Stack())))
 			return
 		}
 	}()

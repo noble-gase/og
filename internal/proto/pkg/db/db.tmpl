@@ -2,18 +2,19 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"time"
-
-	"{{.Module}}/pkg/log"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/noble-gase/ne/sqls"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
+
+var ErrClientNil = errors.New("ent client is nil (forgotten initialize?)")
 
 // InitDriver 初始化Ent实例(如有多个实例，在此方法中初始化)
 func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
@@ -41,7 +42,7 @@ func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
 	driver := entsql.OpenDB(driverName, db)
 	if viper.GetBool("app.debug") {
 		return dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
-			log.Info(ctx, "SQL log", zap.String("sql", fmt.Sprint(v...)))
+			slog.InfoContext(ctx, "SQL log", slog.String("sql", fmt.Sprint(v...)))
 		}), nil
 	}
 	return driver, nil

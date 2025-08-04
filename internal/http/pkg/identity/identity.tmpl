@@ -6,14 +6,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-
-	"{{.Module}}/pkg/log"
+	"log/slog"
 
 	"github.com/noble-gase/ne/conv"
 	"github.com/noble-gase/ne/crypts"
 	"github.com/noble-gase/ne/metadata"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 const (
@@ -33,19 +31,19 @@ func FromAuthToken(ctx context.Context, token string) Identity {
 
 	cipherText, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		log.Error(ctx, "[AuthToken] base64.Decode failed", zap.Error(err))
+		slog.ErrorContext(ctx, "[AuthToken] base64.Decode failed", slog.String("error", err.Error()))
 		return identity
 	}
 
 	key := []byte(viper.GetString("app.secret"))
 	plainText, err := crypts.DecryptCBC(key, key[:aes.BlockSize], cipherText)
 	if err != nil {
-		log.Error(ctx, "[AuthToken] crypts.DecryptCBC failed", zap.Error(err))
+		slog.ErrorContext(ctx, "[AuthToken] crypts.DecryptCBC failed", slog.String("error", err.Error()))
 		return identity
 	}
 
 	if err = json.Unmarshal(plainText, &identity); err != nil {
-		log.Error(ctx, "[AuthToken] json.Unmarshal failed", zap.Error(err))
+		slog.ErrorContext(ctx, "[AuthToken] json.Unmarshal failed", slog.String("error", err.Error()))
 	}
 	return identity
 }

@@ -14,4 +14,4 @@ options = { dial_timeout = 10, read_timeout = 10, write_timeout = 10, pool_size 
 
 [log]
 path = "logs/app.log"
-options = { max_size = 100, max_age = 7, max_backups = 10, compress = true, stderr = true }
+options = { max_size = 100, max_age = 7, max_backups = 10, compress = true, stdout = true }

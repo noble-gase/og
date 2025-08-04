@@ -3,17 +3,16 @@ package middleware
 import (
 	"bytes"
 	"io"
+	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
-
-	"{{.Module}}/pkg/log"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/noble-gase/ne/helper"
 	"github.com/noble-gase/ne/result"
 	"github.com/tidwall/pretty"
-	"go.uber.org/zap"
 )
 
 const MaxBodyLogSize = 20 << 10 // 20KB
@@ -28,8 +27,9 @@ var bufPool = sync.Pool{
 func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
-		body := "<nil>"
-		size := 0
+
+		reqBody := "<nil>"
+		reqSize := 0
 
 		buf := bufPool.Get().(*bytes.Buffer)
 		buf.Reset()
@@ -40,45 +40,45 @@ func Log(next http.Handler) http.Handler {
 
 		// 记录日志
 		defer func() {
-			fields := make([]zap.Field, 0, 10)
+			fields := make([]any, 0, 10)
 			fields = append(fields,
-				zap.String("method", r.Method),
-				zap.String("uri", r.RequestURI),
-				zap.String("ip", r.RemoteAddr),
-				zap.Any("header", r.Header),
-				zap.String("req_body", body),
-				zap.Int("req_size", size),
+				slog.String("method", r.Method),
+				slog.String("uri", r.RequestURI),
+				slog.String("ip", r.RemoteAddr),
+				slog.Any("header", r.Header),
+				slog.String("req_body", reqBody),
+				slog.Int("req_size", reqSize),
 			)
 			// 响应体
 			respSize := buf.Len()
-			if respSize <= MaxBodyLogSize {
-				fields = append(fields, zap.String("resp_body", buf.String()))
+			if respSize > MaxBodyLogSize {
+				fields = append(fields, slog.String("resp_body", "body too large"))
 			} else {
-				fields = append(fields, zap.String("resp_body", "body too large"))
+				fields = append(fields, slog.String("resp_body", strings.TrimSuffix(buf.String(), "\n")))
 			}
-			fields = append(fields, zap.Int("resp_size", respSize))
-			fields = append(fields, zap.Int("status", ww.Status()), zap.String("duration", time.Since(now).String()))
-			log.Info(r.Context(), "request log", fields...)
+			fields = append(fields, slog.Int("resp_size", respSize))
+			fields = append(fields, slog.Int("status", ww.Status()), slog.String("duration", time.Since(now).String()))
+			slog.InfoContext(r.Context(), "request log", fields...)
 		}()
 
 		// 请求包含body
 		if r.Body != nil && r.Body != http.NoBody {
 			b, err := io.ReadAll(r.Body) // 取出Body
 			if err != nil {
-				log.Error(r.Context(), "io.ReadAll failed", zap.Error(err))
+				slog.ErrorContext(r.Context(), "io.ReadAll failed", slog.String("error", err.Error()))
 				result.Err(err).JSON(w, r)
 				return
 			}
 			_ = r.Body.Close() // 关闭原Body
 			// 记录Body
-			size = len(b)
-			if size > MaxBodyLogSize {
-				body = string(b[:MaxBodyLogSize])
+			reqSize = len(b)
+			if reqSize > MaxBodyLogSize {
+				reqBody = string(b[:MaxBodyLogSize])
 			} else {
 				if helper.ContentType(r.Header) == helper.ContentJSON {
-					body = string(pretty.Ugly(b))
+					reqBody = string(pretty.Ugly(b))
 				} else {
-					body = string(b)
+					reqBody = string(b)
 				}
 			}
 			// 重置Body

@@ -1,22 +1,20 @@
 package server
 
 import (
-	"context"
+	"fmt"
 	"net"
 
 	"{{.Module}}/{{.ApiPkg}}"
 	"{{.Module}}/internal/{{.AppPkg}}/service/greeter"
-	"{{.Module}}/pkg/log"
 	"{{.Module}}/pkg/middleware"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
-func NewGrpcServer(ctx context.Context) *grpc.Server {
+func NewGrpcServer() *grpc.Server {
 	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		middleware.TraceId,
 		middleware.Recovery,
@@ -24,28 +22,34 @@ func NewGrpcServer(ctx context.Context) *grpc.Server {
 		middleware.Log,
 		middleware.Validator,
 	))
+
 	// 服务注册
 	registerGrpc(srv)
+
 	// 启用Reflection
 	reflection.Register(srv)
+
 	return srv
 }
 
-func ServeGrpc(ctx context.Context, srv *grpc.Server, addr string) {
+func ServeGrpc(srv *grpc.Server, addr string) {
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatal(ctx, "net.Listen failed", zap.Error(err), zap.String("addr", addr))
+		panic(fmt.Errorf("ServeGrpc: %w", err))
 	}
+
 	// Serve gRPC server
-	log.Info(ctx, "gRPC server start", zap.String("addr", addr))
+	fmt.Println("Serving gRPC on", addr)
 	if err := srv.Serve(lis); err != nil {
-		log.Fatal(ctx, "gRPC serving error", zap.Error(err))
+		panic(fmt.Errorf("ServeGrpc: %w", err))
 	}
 }
 
 // 服务注册
 func registerGrpc(s *grpc.Server) {
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
+
+	// 自定义服务
 	{{.ApiName}}.RegisterGreeterServiceServer(s, greeter.New())
 }

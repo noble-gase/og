@@ -2,8 +2,6 @@ package cache
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -13,20 +11,20 @@ import (
 
 var client redis.UniversalClient
 
-func Client(ctx context.Context) redis.UniversalClient {
+func Client() redis.UniversalClient {
 	if client == nil {
-		log.Panic(ctx, "redis client is nil (forgotten initialize?)")
+		panic("redis client is nil (forgotten initialize?)")
 	}
 	return client
 }
 
 // Init 初始化Redis客户端
-func Init(ctx context.Context, cfgName string) error {
+func Init(cfgName string) error {
 	cfg := &redis.UniversalOptions{
-		Addrs: viper.GetStringSlice(fmt.Sprintf("%s.addrs", cfgName)),
+		Addrs: viper.GetStringSlice(cfgName + ".addrs"),
 	}
 
-	opts := viper.GetStringMap(fmt.Sprintf("%s.options", cfgName))
+	opts := viper.GetStringMap(cfgName + ".options")
 	if len(opts) != 0 {
 		cfg.DB = cast.ToInt(opts["db"])
 		cfg.Username = cast.ToString(opts["username"])
@@ -45,7 +43,7 @@ func Init(ctx context.Context, cfgName string) error {
 
 	client = redis.NewUniversalClient(cfg)
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	// verify connection
 	if err := client.Ping(ctx).Err(); err != nil {
@@ -55,9 +53,8 @@ func Init(ctx context.Context, cfgName string) error {
 	return nil
 }
 
-func CloseAll() error {
+func Close() {
 	if client != nil {
-		return client.Close()
+		_ = client.Close()
 	}
-	return nil
 }

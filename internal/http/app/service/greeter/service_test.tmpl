@@ -10,14 +10,12 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	ctx := context.Background()
-
 	// 初始化
-	config.Init(ctx, "TOML配置文件路径")
+	config.Init("TOML配置文件路径")
 	// 执行测试
 	code := m.Run()
 	// 关闭资源
-	config.CleanUp(ctx)
+	config.CleanUp()
 
 	os.Exit(code)
 }

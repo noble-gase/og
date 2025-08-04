@@ -6,25 +6,23 @@ import (
 	"runtime/debug"
 
 	"{{.Module}}/pkg/db"
-	"{{.Module}}/pkg/log"
 
 	"entgo.io/ent/dialect"
-	"go.uber.org/zap"
 )
 
 var client *Client
 
-func DB(ctx context.Context) *Client {
+func DB() *Client {
 	if client == nil {
-		log.Panic(ctx, "ent client is nil (forgotten initialize?)")
+		panic(db.ErrClientNil)
 	}
 	return client
 }
 
-func Init(ctx context.Context, cfgName string) {
+func Init(cfgName string) {
 	driver, err := db.InitDriver(dialect.MySQL, cfgName)
 	if err != nil {
-		log.Panic(ctx, "数据库初始化失败", zap.Error(err))
+		panic(fmt.Errorf("数据库初始化失败: %w",err))
 	}
 	client = NewClient(Driver(driver))
 }
@@ -33,7 +31,7 @@ func Init(ctx context.Context, cfgName string) {
 // The provided context is used until the transaction is committed or rolledback.
 func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error) (err error) {
 	if client == nil {
-		return errors.New("ent client is nil (forgotten initialize?)")
+		return db.ErrClientNil
 	}
 
 	tx, _err := client.Tx(ctx)
@@ -68,9 +66,8 @@ func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error
 	return
 }
 
-func Close() error {
+func Close() {
 	if client != nil {
-		return client.Close()
+		_ = client.Close()
 	}
-	return nil
 }

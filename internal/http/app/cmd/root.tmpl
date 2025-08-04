@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,7 +12,6 @@ import (
 
 	"{{.Module}}/internal/{{.AppPkg}}/config"
 	"{{.Module}}/internal/{{.AppPkg}}/router"
-	"{{.Module}}/pkg/log"
 	"{{.Module}}/pkg/middleware"
 	"{{.Module}}/pkg/trace"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/noble-gase/ne/cors"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v3"
-	"go.uber.org/zap"
 )
 
 func root() *cli.Command {
@@ -35,18 +35,18 @@ func root() *cli.Command {
 			},
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			config.Init(ctx, cmd.String("config"))
+			config.Init(cmd.String("config"))
 			return ctx, nil
 		},
 		After: func(ctx context.Context, cmd *cli.Command) error {
-			config.CleanUp(ctx)
+			config.CleanUp()
 			return nil
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// make sure we have a working tempdir in minimal containers, because:
 			// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
 			if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
-				log.Error(ctx, "create temp dir failed", zap.Error(err))
+				slog.ErrorContext(ctx, "os.MkdirAll(os.TempDir()) failed", slog.Any("error", err))
 			}
 			serving(ctx)
 			return nil
@@ -81,20 +81,20 @@ func serving(ctx context.Context) {
 
 	// 启动服务
 	go func() {
-		log.Info(ctx, "server start", zap.String("addr", srv.Addr))
+		fmt.Println("serving on", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(ctx, "serving error", zap.Error(err))
+			panic(fmt.Errorf("ListenAndServe: %w", err))
 		}
 	}()
 
 	// 阻塞直到接收到信号
 	<-sigCtx.Done()
-	log.Info(ctx, "收到终止信号，正在关闭服务...")
+	fmt.Println("收到终止信号，正在关闭服务...")
 
 	// 关闭服务
 	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutCtx); err != nil {
-		log.Error(ctx, "server shutdown failed", zap.Error(err))
+		slog.ErrorContext(ctx, "server shutdown failed", slog.String("error", err.Error()))
 	}
 }
