@@ -14,14 +14,14 @@ go install github.com/noble-gase/og/cmd/gg@latest
 
 ```shell
 # CLI
-gg --path=.      # 当前目录
-gg --path=a/b/c  # 指定目录
-gg --path=xxx.go # 指定文件
+gg --path .      # 当前目录
+gg --path a/b/c  # 指定目录
+gg --path xxx.go # 指定文件
 
 # go generate
-//go:generate gg --path=.
-//go:generate gg --path=a/b/c
-//go:generate gg --path=xxx.go
+//go:generate gg --path .
+//go:generate gg --path a/b/c
+//go:generate gg --path xxx.go
 ```
 
 ## 例子
