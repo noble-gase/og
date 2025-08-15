@@ -4,10 +4,10 @@ go 1.23.0
 
 require (
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/mod v0.26.0
-	golang.org/x/tools v0.35.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0
-	google.golang.org/protobuf v1.36.6
+	golang.org/x/mod v0.27.0
+	golang.org/x/tools v0.36.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20250811230008-5f3141c8851a
+	google.golang.org/protobuf v1.36.7
 )
 
 require (
