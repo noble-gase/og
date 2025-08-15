@@ -6,13 +6,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/noble-gase/ne/closes"
 	slogmulti "github.com/samber/slog-multi"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
-
-var rotate *lumberjack.Logger
 
 // Init 初始化日志
 func Init() {
@@ -32,7 +31,7 @@ func Init() {
 		return
 	}
 
-	rotate = &lumberjack.Logger{
+	rotate := &lumberjack.Logger{
 		Filename: filepath.Clean(logfile),
 	}
 
@@ -44,6 +43,10 @@ func Init() {
 		rotate.Compress = cast.ToBool(opts["compress"])
 	}
 
+	closes.Add("log", closes.P100, func() error {
+		return rotate.Close()
+	})
+
 	if cast.ToBool(opts["stdout"]) {
 		slog.SetDefault(slog.New(slogmulti.Fanout(
 			NewContextHandler(rotate, ho),
@@ -52,10 +55,4 @@ func Init() {
 		return
 	}
 	slog.SetDefault(slog.New(NewContextHandler(rotate, ho)))
-}
-
-func Close() {
-	if rotate != nil {
-		_ = rotate.Close()
-	}
 }

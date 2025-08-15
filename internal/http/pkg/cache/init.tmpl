@@ -2,8 +2,10 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/noble-gase/ne/closes"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -19,7 +21,7 @@ func Client() redis.UniversalClient {
 }
 
 // Init 初始化Redis客户端
-func Init(cfgName string) error {
+func Init(cfgName string) {
 	cfg := &redis.UniversalOptions{
 		Addrs: viper.GetStringSlice(cfgName + ".addrs"),
 	}
@@ -45,16 +47,14 @@ func Init(cfgName string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
+
 	// verify connection
 	if err := client.Ping(ctx).Err(); err != nil {
 		_ = client.Close()
-		return err
+		panic(fmt.Errorf("Redis (%s) 初始化失败: %w", cfgName, err))
 	}
-	return nil
-}
 
-func Close() {
-	if client != nil {
-		_ = client.Close()
-	}
+	closes.Add(cfgName, closes.P80, func() error {
+		return client.Close()
+	})
 }

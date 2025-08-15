@@ -22,7 +22,7 @@ func DB() *Client {
 func Init(cfgName string) {
 	driver, err := db.InitDriver(dialect.MySQL, cfgName)
 	if err != nil {
-		panic(fmt.Errorf("数据库初始化失败: %w",err))
+		panic(fmt.Errorf("数据库 (%s) 初始化失败: %w", cfgName, err))
 	}
 	client = NewClient(Driver(driver))
 }

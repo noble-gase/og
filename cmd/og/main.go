@@ -17,7 +17,7 @@ func main() {
 		Use:     "og",
 		Short:   "项目脚手架",
 		Long:    "项目脚手架，快速创建Go项目",
-		Version: "v0.4.0",
+		Version: "v0.5.0",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
@@ -105,14 +105,14 @@ func new() *cobra.Command {
 				internal.InitHttpProject(workDir, mod, proto, apps...)
 			}
 			// go mod init
-			fmt.Println("🍺 执行 go mod init")
+			fmt.Println("⌛️ 执行 go mod init")
 			modInit := exec.Command("go", "mod", "init", mod)
 			modInit.Dir = workDir
 			if err := modInit.Run(); err != nil {
 				log.Fatalln("🐛 go mod init 执行失败:", internal.FmtErr(err))
 			}
 			// go mod tidy
-			fmt.Println("🍺 执行 go mod tidy")
+			fmt.Println("⌛️ 执行 go mod tidy")
 			modTidy := exec.Command("go", "mod", "tidy")
 			modTidy.Dir = workDir
 			modTidy.Stderr = os.Stderr
@@ -156,7 +156,7 @@ func app() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("🍺 解析 go.mod")
+			fmt.Println("⌛️ 解析 go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")
 			if err != nil {
@@ -187,7 +187,7 @@ func app() *cobra.Command {
 				}
 			}
 			// go mod tidy
-			fmt.Println("🍺 执行 go mod tidy")
+			fmt.Println("⌛️ 执行 go mod tidy")
 			modTidy := exec.Command("go", "mod", "tidy")
 			modTidy.Stderr = os.Stderr
 			if err := modTidy.Run(); err != nil {
@@ -215,7 +215,7 @@ func ent() *cobra.Command {
 			"og ent foo bar",
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("🍺 解析 go.mod")
+			fmt.Println("⌛️ 解析 go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")
 			if err != nil {
@@ -244,14 +244,14 @@ func ent() *cobra.Command {
 				internal.InitEnt(".", f.Module.Mod.Path)
 			}
 			// go mod tidy
-			fmt.Println("🍺 执行 go mod tidy")
+			fmt.Println("⌛️ 执行 go mod tidy")
 			modTidy := exec.Command("go", "mod", "tidy")
 			modTidy.Stderr = os.Stderr
 			if err := modTidy.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy 执行失败:", internal.FmtErr(err))
 			}
 			// ent generate
-			fmt.Println("🍺 执行 ent generate")
+			fmt.Println("⌛️ 执行 ent generate")
 			if len(args) != 0 {
 				for _, name := range args {
 					entGen := exec.Command("go", "generate", "./internal/ent/"+name)
@@ -266,7 +266,7 @@ func ent() *cobra.Command {
 				}
 			}
 			// go mod tidy
-			fmt.Println("🍺 执行 go mod tidy")
+			fmt.Println("⌛️ 执行 go mod tidy")
 			modClean := exec.Command("go", "mod", "tidy")
 			modClean.Stderr = os.Stderr
 			if err := modClean.Run(); err != nil {

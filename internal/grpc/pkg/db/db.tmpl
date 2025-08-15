@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"github.com/noble-gase/ne/closes"
 	"github.com/noble-gase/ne/sqls"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -38,6 +39,10 @@ func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	closes.Add(cfgName, closes.P90, func() error {
+		return db.Close()
+	})
 
 	driver := entsql.OpenDB(driverName, db)
 	if viper.GetBool("app.debug") {

@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"sync"
+	"path/filepath"
 
 	"{{.Module}}/pkg/log"
 
@@ -12,9 +12,9 @@ import (
 // Init 初始化资源
 func Init(cfgFile string) {
 	// 初始化配置
-	viper.SetConfigFile(cfgFile)
+	viper.SetConfigFile(filepath.Clean(cfgFile))
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("配置读取失败: %w",err))
+		panic(fmt.Errorf("配置读取失败: %w", err))
 	}
 	viper.WatchConfig()
 
@@ -22,17 +22,4 @@ func Init(cfgFile string) {
 	log.Init()
 	// TODO: 其它初始化操作，如：数据库等
 	// ent.Init("db")
-}
-
-var once sync.Once
-
-// CleanUp 清理资源
-func CleanUp() {
-	once.Do(func() {
-		// 关闭数据库连接
-		// ent.Close()
-
-		// 关闭日志
-		log.Close()
-	})
 }

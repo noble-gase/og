@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"github.com/noble-gase/ne/closes"
 	"github.com/noble-gase/ne/sqls"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -16,7 +17,7 @@ import (
 
 var ErrClientNil = errors.New("ent client is nil (forgotten initialize?)")
 
-// InitDriver 初始化Ent实例(如有多个实例，在此方法中初始化)
+// InitDriver 初始化 Ent Driver
 func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
 	cfg := &sqls.Config{
 		Driver: driverName,
@@ -38,6 +39,10 @@ func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	closes.Add(cfgName, closes.P90, func() error {
+		return db.Close()
+	})
 
 	driver := entsql.OpenDB(driverName, db)
 	if viper.GetBool("app.debug") {

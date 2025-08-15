@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"{{.Module}}/internal/{{.AppPkg}}/config"
 	"{{.Module}}/internal/{{.AppPkg}}/router"
 	"{{.Module}}/pkg/middleware"
 	"{{.Module}}/pkg/trace"
@@ -22,26 +21,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func root() *cli.Command {
+func serve() *cli.Command {
 	return &cli.Command{
-		Version:     "v1.0.0",
-		Description: "Go App (build with og)",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "config",
-				Aliases: []string{"C"},
-				Usage:   "设置配置文件",
-				Value:   "config.toml",
-			},
-		},
-		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			config.Init(cmd.String("config"))
-			return ctx, nil
-		},
-		After: func(ctx context.Context, cmd *cli.Command) error {
-			config.CleanUp()
-			return nil
-		},
+		Name:  "serve",
+		Usage: "Serve the application",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// make sure we have a working tempdir in minimal containers, because:
 			// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
@@ -89,7 +72,7 @@ func serving(ctx context.Context) {
 
 	// 阻塞直到接收到信号
 	<-sigCtx.Done()
-	fmt.Println("收到终止信号，正在关闭服务...")
+	fmt.Println("⌛️ 收到终止信号，正在关闭服务...")
 
 	// 关闭服务
 	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)

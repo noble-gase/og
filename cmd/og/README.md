@@ -20,7 +20,7 @@ go install github.com/noble-gase/og/cmd/og@latest
 ```shell
 og new . # 当前目录初始化
 og new demo # 创建demo项目
-og new demo --mod=xxx.com/demo # 指定module-path
+og new demo --mod xxx.com/demo # 指定module-path
 .
 ├── cmd
 │   ├── config.toml
@@ -44,9 +44,9 @@ og new demo --mod=xxx.com/demo # 指定module-path
 ##### 多应用
 
 ```shell
-og new . --app=foo --app=bar # 当前目录初始化
-og new demo --app=foo --app=bar # 创建demo项目
-og new demo --mod=xxx.com/demo --app=foo --app=bar # 指定module-path
+og new . --app foo --app bar # 当前目录初始化
+og new demo --app foo --app bar # 创建demo项目
+og new demo --mod xxx.com/demo --app foo --app bar # 指定module-path
 .
 ├── cmd
 │   ├── foo
@@ -87,7 +87,7 @@ og new demo --mod=xxx.com/demo --app=foo --app=bar # 指定module-path
 ```shell
 og new . --proto # 当前目录初始化
 og new demo --proto # 创建demo项目
-og new demo --mod=xxx.com/demo --proto # 指定module-path
+og new demo --mod xxx.com/demo --proto # 指定module-path
 .
 ├── api
 │   ├── code.proto
@@ -116,9 +116,9 @@ og new demo --mod=xxx.com/demo --proto # 指定module-path
 ##### 多应用
 
 ```shell
-og new . --app=foo --app=bar --proto # 当前目录初始化
-og new demo --app=foo --app=bar --proto # 创建demo项目
-og new demo --mod=xxx.com/demo --app=foo --app=bar --proto # 指定module-path
+og new . --app foo --app bar --proto # 当前目录初始化
+og new demo --app foo --app bar --proto # 创建demo项目
+og new demo --mod xxx.com/demo --app foo --app bar --proto # 指定module-path
 .
 ├── api
 │   ├── bar
@@ -167,7 +167,7 @@ og new demo --mod=xxx.com/demo --app=foo --app=bar --proto # 指定module-path
 ```shell
 og new . --grpc # 当前目录初始化
 og new demo --grpc # 创建demo项目
-og new demo --mod=xxx.com/demo --grpc # 指定module-path
+og new demo --mod xxx.com/demo --grpc # 指定module-path
 .
 ├── api
 │   └── greeter.proto
@@ -195,9 +195,9 @@ og new demo --mod=xxx.com/demo --grpc # 指定module-path
 ##### 多应用
 
 ```shell
-og new . --app=foo --app=bar --grpc # 当前目录初始化
-og new demo --app=foo --app=bar --grpc # 创建demo项目
-og new demo --mod=xxx.com/demo --app=foo --app=bar --grpc # 指定module-path
+og new . --app foo --app bar --grpc # 当前目录初始化
+og new demo --app foo --app bar --grpc # 创建demo项目
+og new demo --mod xxx.com/demo --app foo --app bar --grpc # 指定module-path
 .
 ├── api
 │   ├── bar

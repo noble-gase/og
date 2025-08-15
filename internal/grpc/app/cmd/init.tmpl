@@ -4,15 +4,35 @@ import (
 	"context"
 	"os"
 
+	"{{.Module}}/internal/{{.AppPkg}}/config"
+
+	"github.com/noble-gase/ne/closes"
 	"github.com/urfave/cli/v3"
 )
 
 func Init() {
-	cmd := root()
-
-	// 注册子命令
-	cmd.Commands = []*cli.Command{
-		hello(),
+	cmd := &cli.Command{
+		Version:     "v1.0.0",
+		Description: "Go App (build with og)",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "config",
+				Aliases: []string{"c"},
+				Usage:   "Set config file",
+				Value:   "config.toml",
+			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			config.Init(cmd.String("config"))
+			return ctx, nil
+		},
+		After: func(ctx context.Context, cmd *cli.Command) error {
+			closes.Close()
+			return nil
+		},
+		Commands: []*cli.Command{
+			serve(),
+		},
 	}
 
 	// 执行命令

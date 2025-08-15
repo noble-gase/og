@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"{{.Module}}/internal/{{.AppPkg}}/config"
+
+	"github.com/noble-gase/ne/closes"
 )
 
 func TestMain(m *testing.M) {
@@ -15,7 +17,7 @@ func TestMain(m *testing.M) {
 	// 执行测试
 	code := m.Run()
 	// 关闭资源
-	config.CleanUp()
+	closes.Close()
 
 	os.Exit(code)
 }
