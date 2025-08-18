@@ -136,7 +136,7 @@ func main() {
 		},
 	}
 	// 注册参数
-	cmd.Flags().StringSliceVarP(&paths, "path", "P", nil, "文件/目录")
+	cmd.Flags().StringSliceVarP(&paths, "path", "p", nil, "文件/目录")
 	// 执行
 	_ = cmd.Execute()
 }
