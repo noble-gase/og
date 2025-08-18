@@ -120,14 +120,14 @@ func main() {
 		Version: "v0.1.0",
 		Example: internal.CmdExamples(
 			"👉 -- CLI --",
-			"gg --path=.",
-			"gg --path=a/b/c",
-			"gg --path=xxx.go",
+			"gg --path .",
+			"gg --path a/b/c",
+			"gg --path xxx.go",
 			"",
 			"👉 -- go:generate --",
-			"//go:generate gg --path=.",
-			"//go:generate gg --path=a/b/c",
-			"//go:generate gg --path=xxx.go",
+			"//go:generate gg --path .",
+			"//go:generate gg --path a/b/c",
+			"//go:generate gg --path xxx.go",
 		),
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, path := range paths {
