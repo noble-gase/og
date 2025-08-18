@@ -115,8 +115,8 @@ func main() {
 
 	cmd := &cobra.Command{
 		Use:     "gg",
-		Short:   "生成Get方法^_^",
-		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
+		Short:   "generate Get methods",
+		Long:    "generate Get methods for structs to avoid panic caused by nil pointer",
 		Version: "v0.1.0",
 		Example: internal.CmdExamples(
 			"👉 -- CLI --",
@@ -136,7 +136,7 @@ func main() {
 		},
 	}
 	// 注册参数
-	cmd.Flags().StringSliceVarP(&paths, "path", "p", nil, "文件/目录")
+	cmd.Flags().StringSliceVarP(&paths, "path", "p", nil, "specify a file or directory")
 	// 执行
 	_ = cmd.Execute()
 }
@@ -144,7 +144,7 @@ func main() {
 func genGetter(path string) {
 	stat, err := os.Stat(path)
 	if err != nil {
-		log.Fatalln("os.Stat", internal.FmtErr(err))
+		log.Fatalln("path stat failed:", internal.FmtErr(err))
 	}
 
 	var dir string
@@ -165,7 +165,7 @@ func genGetter(path string) {
 		return true
 	}, parser.AllErrors)
 	if err != nil {
-		log.Fatalln("parser.ParseDir", internal.FmtErr(err))
+		log.Fatalln("package file-parse failed:", internal.FmtErr(err))
 	}
 
 	var files []*ast.File
@@ -187,7 +187,7 @@ func genGetter(path string) {
 		DisableUnusedImportCheck: true,
 	}
 	if _, err = conf.Check("", fset, files, info); err != nil {
-		log.Fatalln("conf.Check", internal.FmtErr(err))
+		log.Fatalln("package type-check failed:", internal.FmtErr(err))
 	}
 
 	// Generate file
@@ -259,13 +259,13 @@ func genFile(node *ast.File, info *types.Info, filename string) {
 	var buf bytes.Buffer
 	t := template.Must(template.New("getters").Parse(tmpl))
 	if err := t.Execute(&buf, gen); err != nil {
-		log.Fatalln("t.Execute", internal.FmtErr(err))
+		log.Fatalln("template execute failed:", internal.FmtErr(err))
 	}
 
 	// Write to a file
 	outputFile := strings.ReplaceAll(sourceFile, ".go", suffix)
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0o755); err != nil {
-		log.Fatalln("os.WriteFile", internal.FmtErr(err))
+		log.Fatalln("write to file failed:", internal.FmtErr(err))
 	}
 	fmt.Println("Generated code saved to", outputFile)
 }
