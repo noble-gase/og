@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/noble-gase/og/internal"
 	"github.com/spf13/cobra"
-	"golang.org/x/tools/go/packages"
 )
 
 const suffix = "_getter.go"
@@ -141,23 +141,6 @@ func main() {
 	_ = cmd.Execute()
 }
 
-// 自定义导入逻辑
-type customImporter struct{}
-
-func (ci *customImporter) Import(path string) (*types.Package, error) {
-	cfg := &packages.Config{
-		Mode: packages.LoadAllSyntax,
-	}
-	pkgs, err := packages.Load(cfg, path)
-	if err != nil {
-		return nil, fmt.Errorf("packages.Load: %w", err)
-	}
-	if len(pkgs) == 0 {
-		return nil, fmt.Errorf("package not found: %s", path)
-	}
-	return pkgs[0].Types, nil
-}
-
 func genGetter(path string) {
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -194,11 +177,12 @@ func genGetter(path string) {
 		}
 	}
 
+	// Type-checks a package and returns the resulting package object
 	info := &types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 	}
 	conf := &types.Config{
-		Importer:                 &customImporter{},
+		Importer:                 importer.ForCompiler(fset, "source", nil),
 		IgnoreFuncBodies:         true,
 		DisableUnusedImportCheck: true,
 	}
