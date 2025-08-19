@@ -15,7 +15,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-const MaxBodyLogSize = 20 << 10 // 20KB
+const MaxLogSize = 32 << 10 // 32KB
 
 var bufPool = sync.Pool{
 	New: func() any {
@@ -28,60 +28,53 @@ func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 
-		reqBody := "<nil>"
-		reqSize := 0
+		body := "<nil>"
 
 		buf := bufPool.Get().(*bytes.Buffer)
 		buf.Reset()
-		defer bufPool.Put(buf)
+		defer func() {
+			if buf.Cap() > MaxLogSize {
+				return
+			}
+			buf.Reset()
+			bufPool.Put(buf)
+		}()
+
 		// 自定义响应
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		ww.Tee(buf)
+		ww.Tee(helper.LimitWriter(buf, MaxLogSize))
 
-		// 记录日志
 		defer func() {
-			fields := make([]any, 0, 10)
-			fields = append(fields,
+			slog.InfoContext(r.Context(), "request log",
 				slog.String("method", r.Method),
 				slog.String("uri", r.RequestURI),
 				slog.String("ip", r.RemoteAddr),
 				slog.Any("header", r.Header),
-				slog.String("req_body", reqBody),
-				slog.Int("req_size", reqSize),
+				slog.String("request", body),
+				slog.String("response", strings.TrimSuffix(buf.String(), "\n")),
+				slog.Int("status", ww.Status()),
+				slog.String("duration", time.Since(now).String()),
 			)
-			// 响应体
-			respSize := buf.Len()
-			if respSize > MaxBodyLogSize {
-				fields = append(fields, slog.String("resp_body", "body too large"))
-			} else {
-				fields = append(fields, slog.String("resp_body", strings.TrimSuffix(buf.String(), "\n")))
-			}
-			fields = append(fields, slog.Int("resp_size", respSize))
-			fields = append(fields, slog.Int("status", ww.Status()), slog.String("duration", time.Since(now).String()))
-			slog.InfoContext(r.Context(), "request log", fields...)
 		}()
 
-		// 请求包含body
 		if r.Body != nil && r.Body != http.NoBody {
-			b, err := io.ReadAll(r.Body) // 取出Body
+			b, err := io.ReadAll(r.Body)
 			if err != nil {
-				slog.ErrorContext(r.Context(), "io.ReadAll failed", slog.String("error", err.Error()))
+				slog.ErrorContext(r.Context(), "request body read failed", slog.String("error", err.Error()))
 				result.Err(err).JSON(w, r)
 				return
 			}
-			_ = r.Body.Close() // 关闭原Body
-			// 记录Body
-			reqSize = len(b)
-			if reqSize > MaxBodyLogSize {
-				reqBody = string(b[:MaxBodyLogSize])
+			r.Body.Close()
+
+			if len(b) > MaxLogSize {
+				body = string(b[:MaxLogSize])
 			} else {
 				if helper.ContentType(r.Header) == helper.ContentJSON {
-					reqBody = string(pretty.Ugly(b))
+					body = string(pretty.Ugly(b))
 				} else {
-					reqBody = string(b)
+					body = string(b)
 				}
 			}
-			// 重置Body
 			r.Body = io.NopCloser(bytes.NewReader(b))
 		}
 
