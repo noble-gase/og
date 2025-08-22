@@ -12,7 +12,6 @@ import (
 
 	"{{.Module}}/internal/{{.AppPkg}}/router"
 	"{{.Module}}/pkg/middleware"
-	"{{.Module}}/pkg/trace"
 
 	"github.com/go-chi/chi/v5"
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
@@ -39,7 +38,7 @@ func serve() *cli.Command {
 
 func serving(ctx context.Context) {
 	// 跨域设置
-	withCors := cors.New(cors.ACEH(trace.TraceId))
+	withCors := cors.New(cors.ACEH(middleware.XTraceId))
 	// 创建路由
 	r := chi.NewRouter()
 	// middleware

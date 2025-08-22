@@ -2,25 +2,13 @@ package status
 
 import (
 	"context"
-	"fmt"
-
-	"{{.Module}}/pkg/trace"
 
 	"github.com/noble-gase/ne/codes"
 	gcodes "google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 func Error(ctx context.Context, err error) error {
 	code := codes.FromError(err)
-
-	traceId := "-"
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if vals := md.Get(trace.TraceId); len(vals) != 0 {
-			traceId = vals[0]
-		}
-	}
-
-	return status.Error(gcodes.Code(code.Val()), fmt.Sprintf("[%s] %s", traceId, code.Msg()))
+	return status.Error(gcodes.Code(code.Val()), code.Msg())
 }

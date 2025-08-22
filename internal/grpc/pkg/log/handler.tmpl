@@ -4,15 +4,22 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"os"
 
-	"github.com/noble-gase/ne/metadata"
+	"google.golang.org/grpc/metadata"
 )
+
+var hostname, _ = os.Hostname()
 
 type contextHandler struct {
 	slog.Handler
 }
 
 func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
+	// hostname
+	r.AddAttrs(slog.String("hostname", hostname))
+
+	// metadata
 	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md) != 0 {
 		for k, v := range md {
 			if len(v) == 1 {
@@ -22,6 +29,7 @@ func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
 			}
 		}
 	}
+
 	return h.Handler.Handle(ctx, r)
 }
 

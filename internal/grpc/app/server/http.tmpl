@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"{{.Module}}/{{.ApiPkg}}"
-	"{{.Module}}/pkg/trace"
+	"{{.Module}}/pkg/middleware"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/noble-gase/ne/cors"
@@ -29,7 +29,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *htt
 			return strings.ToLower(s), true
 		}),
 		runtime.WithOutgoingHeaderMatcher(func(s string) (string, bool) {
-			if s == trace.TraceId {
+			if s == middleware.XTraceId {
 				return s, true
 			}
 			return runtime.MetadataHeaderPrefix + s, true
@@ -55,7 +55,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *htt
 		panic(fmt.Errorf("NewHttpServer: %w", err))
 	}
 	// With CORS
-	withCors := cors.New(cors.ACEH(trace.TraceId)).Handler(mux)
+	withCors := cors.New(cors.ACEH(middleware.XTraceId)).Handler(mux)
 	// Serve HTTP server
 	srv := &http.Server{
 		Addr:         addr,

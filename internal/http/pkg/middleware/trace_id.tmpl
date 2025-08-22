@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
-	"{{.Module}}/pkg/trace"
-
+	"github.com/google/uuid"
 	"github.com/noble-gase/ne/metadata"
 )
+
+const XTraceId = "x-trace-id"
 
 // TraceId is a middleware that injects a trace ID into the context of each request.
 func TraceId(next http.Handler) http.Handler {
@@ -17,21 +19,24 @@ func TraceId(next http.Handler) http.Handler {
 		if !ok {
 			md = metadata.Pairs()
 		}
-		md.Set(trace.TraceHost, trace.Hostname())
+
 		// traceId
 		var traceId string
-		if vals := md.Get(trace.TraceId); len(vals) != 0 {
+		if vals := md.Get(XTraceId); len(vals) != 0 {
 			traceId = vals[0]
 		} else {
-			traceId = r.Header.Get(trace.TraceId)
+			traceId = r.Header.Get(XTraceId)
 			if len(traceId) == 0 {
-				traceId = trace.NewTraceId()
+				traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
 			}
-			md.Set(trace.TraceId, traceId)
+			md.Set(XTraceId, traceId)
 		}
+
 		// set response header
-		w.Header().Set(trace.TraceId, traceId)
+		w.Header().Set(XTraceId, traceId)
+
 		// reset request context
 		next.ServeHTTP(w, r.WithContext(metadata.NewIncomingContext(ctx, md)))
 	})
 }
+
