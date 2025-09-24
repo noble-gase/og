@@ -11,7 +11,7 @@ Go Web项目快速开发脚手架
 - 包含 TraceId、请求日志、跨域 中间件
 - 简单好用的 API Result 统一输出方式
 
-### 前提条件
+#### 前提条件
 
 ```shell
 # 安装 protoc
@@ -21,7 +21,7 @@ brew install protobuf
 sh install.sh
 ```
 
-### Ent支持
+#### Ent支持
 
 ```shell
 # 安装 ent

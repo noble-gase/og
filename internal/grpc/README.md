@@ -2,7 +2,7 @@
 
 Go gRPC项目快速开发脚手架
 
-- ORM使用 [ent](https://github.com/ent/ent)
+- 数据库使用 [jet](https://github.com/go-jet/jet)
 - Redis使用 [go-redis](https://github.com/redis/go-redis)
 - 配置使用 [viper](https://github.com/spf13/viper)
 - 命令行使用 [cli](https://github.com/urfave/cli)
@@ -14,7 +14,7 @@ Go gRPC项目快速开发脚手架
 - 包含 TraceId、请求日志 等中间件
 - 简单好用的 Result Status 统一输出方式
 
-### 前提条件
+#### 前提条件
 
 ```shell
 # 安装 protoc
@@ -24,7 +24,7 @@ brew install protobuf
 sh install.sh
 ```
 
-### Ent支持
+#### Ent支持
 
 ```shell
 # 安装 ent
