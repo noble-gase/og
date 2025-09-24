@@ -2,36 +2,40 @@ package {{.AppName}}
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"runtime/debug"
 
 	"{{.Module}}/pkg/db"
 
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql"
+	"github.com/spf13/viper"
 )
 
 var client *Client
 
 func DB() *Client {
 	if client == nil {
-		panic(db.ErrClientNil)
+		panic("ent client is nil (forgotten initialize?)")
 	}
 	return client
 }
 
 func Init(cfgName string) {
-	driver, err := db.InitDriver(dialect.MySQL, cfgName)
-	if err != nil {
-		panic(fmt.Errorf("数据库 (%s) 初始化失败: %w", cfgName, err))
-	}
-	client = NewClient(Driver(driver))
+	name := viper.GetString(cfgName + ".driver")
+	driver := sql.OpenDB(name, db.New(cfgName))
+	client = NewClient(dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
+		slog.InfoContext(ctx, fmt.Sprint(v...))
+	}))
 }
 
 // Transaction Executes ent transaction with callback function.
 // The provided context is used until the transaction is committed or rolledback.
 func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error) (err error) {
 	if client == nil {
-		return db.ErrClientNil
+		return errors.New("ent client is nil (forgotten initialize?)")
 	}
 
 	tx, _err := client.Tx(ctx)
@@ -64,10 +68,4 @@ func Transaction(ctx context.Context, fn func(ctx context.Context, tx *Tx) error
 		err = fmt.Errorf("commit: %w", e)
 	}
 	return
-}
-
-func Close() {
-	if client != nil {
-		_ = client.Close()
-	}
 }

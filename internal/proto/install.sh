@@ -2,9 +2,6 @@
 
 set -ve
 
-# ent
-go install entgo.io/ent/cmd/ent@latest
-
 # proto
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install github.com/noble-gase/og/cmd/protoc-gen-og@latest

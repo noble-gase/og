@@ -1,30 +1,26 @@
 package db
 
 import (
-	"context"
-	"errors"
+	"database/sql"
 	"fmt"
-	"log/slog"
 	"time"
 
-	"entgo.io/ent/dialect"
-	entsql "entgo.io/ent/dialect/sql"
 	"github.com/noble-gase/ne/closes"
 	"github.com/noble-gase/ne/sqls"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
-var ErrClientNil = errors.New("ent client is nil (forgotten initialize?)")
+var DB *sql.DB
 
-// InitDriver 初始化Ent实例(如有多个实例，在此方法中初始化)
-func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
+func Init() {
+	DB = New("db")
+}
+
+func New(cfgName string) *sql.DB {
 	cfg := &sqls.Config{
-		Driver: driverName,
+		Driver: viper.GetString(cfgName + ".driver"),
 		DSN:    viper.GetString(cfgName + ".dsn"),
-	}
-	if driverName == dialect.Postgres {
-		cfg.Driver = "pgx"
 	}
 
 	opts := viper.GetStringMap(cfgName + ".options")
@@ -37,18 +33,12 @@ func InitDriver(driverName, cfgName string) (dialect.Driver, error) {
 
 	db, err := sqls.NewDB(cfg)
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("DB (%s) init failed: %w", cfgName, err))
 	}
 
 	closes.Add(cfgName, closes.P90, func() error {
 		return db.Close()
 	})
 
-	driver := entsql.OpenDB(driverName, db)
-	if viper.GetBool("app.debug") {
-		return dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
-			slog.InfoContext(ctx, "SQL log", slog.String("sql", fmt.Sprint(v...)))
-		}), nil
-	}
-	return driver, nil
+	return db
 }

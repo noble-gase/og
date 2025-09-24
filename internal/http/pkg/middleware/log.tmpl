@@ -45,9 +45,8 @@ func Log(next http.Handler) http.Handler {
 		ww.Tee(helper.LimitWriter(buf, MaxLogSize))
 
 		defer func() {
-			slog.InfoContext(r.Context(), "request log",
+			slog.InfoContext(r.Context(), r.RequestURI,
 				slog.String("method", r.Method),
-				slog.String("uri", r.RequestURI),
 				slog.String("ip", r.RemoteAddr),
 				slog.Any("header", r.Header),
 				slog.String("request", body),

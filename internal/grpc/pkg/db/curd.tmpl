@@ -1,0 +1,140 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"log/slog"
+
+	. "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/qrm"
+)
+
+var ErrDbNil = errors.New("db is nil (forgotten initialize?)")
+
+func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
+	if db == nil {
+		return 0, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	ret, err := stmt.ExecContext(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+	return ret.LastInsertId()
+}
+
+func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error) {
+	if db == nil {
+		return 0, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	ret, err := stmt.ExecContext(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+	return ret.RowsAffected()
+}
+
+func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) error {
+	if db == nil {
+		return ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	_, err := stmt.ExecContext(ctx, db)
+	return err
+}
+
+func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, error) {
+	if db == nil {
+		return nil, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	var dest T
+	if err := stmt.LIMIT(1).QueryContext(ctx, db, &dest); err != nil {
+		if !errors.Is(err, qrm.ErrNoRows) {
+			return nil, err
+		}
+		return nil, nil
+	}
+	return &dest, nil
+}
+
+func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
+	if db == nil {
+		return nil, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	var dest []T
+	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
+		return nil, err
+	}
+	return dest, nil
+}
+
+func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error) {
+	if db == nil {
+		return 0, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	var total struct {
+		Count int64
+	}
+	if err := stmt.QueryContext(ctx, db, &total); err != nil {
+		return 0, err
+	}
+	return total.Count, nil
+}
+
+func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStatement, page, size int) ([]T, int64, error) {
+	if db == nil {
+		return nil, 0, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, count.DebugSql())
+
+	var total struct {
+		Count int64
+	}
+	if err := count.QueryContext(ctx, db, &total); err != nil {
+		return nil, 0, err
+	}
+
+	var dest []T
+	if total.Count > 0 {
+		if page <= 0 {
+			page = 1
+		}
+		if size <= 0 {
+			size = 20
+		}
+
+		query = query.OFFSET(int64((page - 1) * size)).LIMIT(int64(size))
+		// SQL日志
+		slog.InfoContext(ctx, query.DebugSql())
+
+		if err := query.QueryContext(ctx, db, &dest); err != nil {
+			return nil, 0, err
+		}
+	}
+	return dest, total.Count, nil
+}

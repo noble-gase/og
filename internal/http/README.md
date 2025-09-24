@@ -11,9 +11,9 @@ Go Web项目快速开发脚手架
 - 包含 TraceId、请求日志、跨域 中间件
 - 简单好用的 API Result 统一输出方式
 
-### 前提条件
+### Ent支持
 
-```sh
+```shell
 # 安装 ent
 go install entgo.io/ent/cmd/ent@latest
 

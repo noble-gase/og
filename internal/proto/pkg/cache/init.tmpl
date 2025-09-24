@@ -11,17 +11,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var client redis.UniversalClient
+var R redis.UniversalClient
 
-func Client() redis.UniversalClient {
-	if client == nil {
-		panic("redis client is nil (forgotten initialize?)")
-	}
-	return client
+func Init() {
+	R = New("redis")
 }
 
-// Init 初始化Redis客户端
-func Init(cfgName string) {
+func New(cfgName string) redis.UniversalClient {
 	cfg := &redis.UniversalOptions{
 		Addrs: viper.GetStringSlice(cfgName + ".addrs"),
 	}
@@ -43,7 +39,7 @@ func Init(cfgName string) {
 		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
 	}
 
-	client = redis.NewUniversalClient(cfg)
+	client := redis.NewUniversalClient(cfg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -51,10 +47,12 @@ func Init(cfgName string) {
 	// verify connection
 	if err := client.Ping(ctx).Err(); err != nil {
 		_ = client.Close()
-		panic(fmt.Errorf("Redis (%s) 初始化失败: %w", cfgName, err))
+		panic(fmt.Errorf("Redis (%s) init failed: %w", cfgName, err))
 	}
 
 	closes.Add(cfgName, closes.P80, func() error {
 		return client.Close()
 	})
+
+	return client
 }

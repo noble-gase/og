@@ -24,8 +24,7 @@ func Log(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handl
 			errInfo = err.Error()
 		}
 
-		slog.InfoContext(ctx, "request log",
-			slog.String("method", info.FullMethod),
+		slog.InfoContext(ctx, info.FullMethod,
 			slog.Any("request", req),
 			slog.Any("response", resp),
 			slog.String("error", errInfo),

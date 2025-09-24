@@ -22,6 +22,13 @@ brew install protobuf
 
 # 安装依赖工具
 sh install.sh
+```
+
+### Ent支持
+
+```shell
+# 安装 ent
+go install entgo.io/ent/cmd/ent@latest
 
 # 生成 ent 模块
 og ent --help
