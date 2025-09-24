@@ -129,6 +129,7 @@ func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStateme
 		}
 
 		query = query.OFFSET(int64((page - 1) * size)).LIMIT(int64(size))
+
 		// SQL日志
 		slog.InfoContext(ctx, query.DebugSql())
 
