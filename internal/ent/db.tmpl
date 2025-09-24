@@ -26,9 +26,9 @@ func DB() *Client {
 func Init(cfgName string) {
 	name := viper.GetString(cfgName + ".driver")
 	driver := sql.OpenDB(name, db.New(cfgName))
-	client = NewClient(dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
+	client = NewClient(Driver(dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
 		slog.InfoContext(ctx, fmt.Sprint(v...))
-	}))
+	})))
 }
 
 // Transaction Executes ent transaction with callback function.

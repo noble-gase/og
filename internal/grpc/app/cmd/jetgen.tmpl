@@ -1,0 +1,20 @@
+package cmd
+
+import (
+	"context"
+
+	"{{.Module}}/pkg/db"
+
+	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/urfave/cli/v3"
+)
+
+func jetgen() *cli.Command {
+	return &cli.Command{
+		Name:  "jetgen",
+		Usage: "Generate SQL Builder and Model types",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			return mysql.GenerateDB(db.DB, "demo", "../internal/gen")
+		},
+	}
+}
