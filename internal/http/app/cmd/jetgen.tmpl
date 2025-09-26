@@ -14,7 +14,7 @@ func jetgen() *cli.Command {
 		Name:  "jetgen",
 		Usage: "Generate SQL Builder and Model types",
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			return mysql.GenerateDB(db.DB, "demo", "../internal/gen")
+			return mysql.GenerateDB(db.DB(), "demo", "../internal/gen")
 		},
 	}
 }

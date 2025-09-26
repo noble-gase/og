@@ -10,8 +10,6 @@ import (
 	"github.com/go-jet/jet/v2/qrm"
 )
 
-var ErrDbNil = errors.New("db is nil (forgotten initialize?)")
-
 func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
 	if db == nil {
 		return 0, ErrDbNil
@@ -129,7 +127,6 @@ func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStateme
 		}
 
 		query = query.OFFSET(int64((page - 1) * size)).LIMIT(int64(size))
-
 		// SQL日志
 		slog.InfoContext(ctx, query.DebugSql())
 

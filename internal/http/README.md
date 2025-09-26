@@ -11,6 +11,18 @@ Go Web项目快速开发脚手架
 - 包含 TraceId、请求日志、跨域 中间件
 - 简单好用的 API Result 统一输出方式
 
+#### 运行
+
+```shell
+cd cmd
+
+# Jet Generate
+go run main.go jetgen
+
+# Serve HTTP
+go run main.go serve
+```
+
 #### Ent支持
 
 ```shell

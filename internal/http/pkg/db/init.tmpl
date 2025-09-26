@@ -1,44 +1,16 @@
 package db
 
-import (
-	"database/sql"
-	"fmt"
-	"time"
+import "database/sql"
 
-	"github.com/noble-gase/ne/closes"
-	"github.com/noble-gase/ne/sqls"
-	"github.com/spf13/cast"
-	"github.com/spf13/viper"
-)
-
-var DB *sql.DB
+var db *sql.DB
 
 func Init() {
-	DB = New("db")
+	db = New("db")
 }
 
-func New(cfgName string) *sql.DB {
-	cfg := &sqls.Config{
-		Driver: viper.GetString(cfgName + ".driver"),
-		DSN:    viper.GetString(cfgName + ".dsn"),
+func DB() *sql.DB {
+	if db == nil {
+		panic(ErrDbNil)
 	}
-
-	opts := viper.GetStringMap(cfgName + ".options")
-	if len(opts) != 0 {
-		cfg.MaxOpenConns = cast.ToInt(opts["max_open_conns"])
-		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
-		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
-		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
-	}
-
-	db, err := sqls.NewDB(cfg)
-	if err != nil {
-		panic(fmt.Errorf("DB (%s) init failed: %w", cfgName, err))
-	}
-
-	closes.Add(cfgName, closes.P90, func() error {
-		return db.Close()
-	})
-
 	return db
 }

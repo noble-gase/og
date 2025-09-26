@@ -1,0 +1,41 @@
+package db
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/noble-gase/ne/closes"
+	"github.com/noble-gase/ne/sqls"
+	"github.com/spf13/cast"
+	"github.com/spf13/viper"
+)
+
+var ErrDbNil = errors.New("db is nil (forgotten initialize?)")
+
+func New(cfgName string) *sql.DB {
+	cfg := &sqls.Config{
+		Driver: viper.GetString(cfgName + ".driver"),
+		DSN:    viper.GetString(cfgName + ".dsn"),
+	}
+
+	opts := viper.GetStringMap(cfgName + ".options")
+	if len(opts) != 0 {
+		cfg.MaxOpenConns = cast.ToInt(opts["max_open_conns"])
+		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
+		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
+		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
+	}
+
+	db, err := sqls.NewDB(cfg)
+	if err != nil {
+		panic(fmt.Errorf("DB (%s) init failed: %w", cfgName, err))
+	}
+
+	closes.Add(cfgName, closes.P90, func() error {
+		return db.Close()
+	})
+
+	return db
+}

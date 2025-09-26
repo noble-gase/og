@@ -31,6 +31,7 @@ func Init() {
 			return nil
 		},
 		Commands: []*cli.Command{
+			jetgen(),
 			serve(),
 		},
 	}
