@@ -1,4 +1,4 @@
-package identity
+package iden
 
 import (
 	"context"
@@ -15,47 +15,47 @@ import (
 )
 
 const (
-	IdentityId    = "identity_id"
-	IdentityToken = "identity_token"
+	IdenId    = "iden_id"
+	IdenToken = "iden_token"
 )
 
-// Identity 授权身份
-type Identity struct {
+// Iden 授权身份
+type Iden struct {
 	Id    int64  `json:"i,omitempty"`
 	Token string `json:"t,omitempty"`
 }
 
 // FromAuthToken 解析授权Token
-func FromAuthToken(ctx context.Context, token string) Identity {
-	var identity Identity
+func FromAuthToken(ctx context.Context, token string) Iden {
+	var iden Iden
 
 	cipherText, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
 		slog.ErrorContext(ctx, "[AuthToken] base64.Decode failed", slog.String("error", err.Error()))
-		return identity
+		return iden
 	}
 
 	key := []byte(viper.GetString("app.secret"))
 	plainText, err := crypts.DecryptCBC(key, key[:aes.BlockSize], cipherText)
 	if err != nil {
 		slog.ErrorContext(ctx, "[AuthToken] crypts.DecryptCBC failed", slog.String("error", err.Error()))
-		return identity
+		return iden
 	}
 
-	if err = json.Unmarshal(plainText, &identity); err != nil {
+	if err = json.Unmarshal(plainText, &iden); err != nil {
 		slog.ErrorContext(ctx, "[AuthToken] json.Unmarshal failed", slog.String("error", err.Error()))
 	}
-	return identity
+	return iden
 }
 
 // ToAuthToken 生成授权Token
 func ToAuthToken(id int64, token string) (string, error) {
-	identity := Identity{
+	iden := Iden{
 		Id:    id,
 		Token: token,
 	}
 
-	b, err := json.Marshal(identity)
+	b, err := json.Marshal(iden)
 	if err != nil {
 		return "", fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -68,24 +68,24 @@ func ToAuthToken(id int64, token string) (string, error) {
 	return ct.String(), nil
 }
 
-func GetIdentityId(ctx context.Context) int64 {
+func GetIdenId(ctx context.Context) int64 {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0
 	}
-	vals := md.Get(IdentityId)
+	vals := md.Get(IdenId)
 	if len(vals) == 0 {
 		return 0
 	}
 	return conv.StrToInt[int64](vals[0])
 }
 
-func GetIdentityToken(ctx context.Context) string {
+func GetIdenToken(ctx context.Context) string {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return ""
 	}
-	vals := md.Get(IdentityToken)
+	vals := md.Get(IdenToken)
 	if len(vals) == 0 {
 		return ""
 	}

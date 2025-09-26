@@ -1,0 +1,21 @@
+package middleware
+
+import (
+	"context"
+
+	"{{.Module}}/pkg/code"
+	"{{.Module}}/pkg/iden"
+	"{{.Module}}/pkg/status"
+
+	"google.golang.org/grpc"
+)
+
+func Auth(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	idenId := iden.GetIdenId(ctx)
+	if idenId == 0 {
+		return nil, status.Error(ctx, code.ErrAuth)
+	}
+	// TODO ...
+
+	return handler(ctx, req)
+}

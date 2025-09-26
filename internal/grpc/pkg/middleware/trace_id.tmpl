@@ -12,7 +12,7 @@ import (
 const XTraceId = "x-trace-id"
 
 // TraceId is a middleware that injects a trace ID into the context of each request.
-func TraceId(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func TraceId(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = metadata.Pairs()

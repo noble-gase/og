@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Recovery(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func Recovery(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			slog.ErrorContext(ctx, "server panic recovered", slog.Any("request", req), slog.Any("err", err), slog.String("stack", string(debug.Stack())))
