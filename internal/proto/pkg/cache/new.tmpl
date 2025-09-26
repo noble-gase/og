@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var ErrCacheNil = errors.New("redis client is nil (forgotten initialize?)")
+var ErrClientNil = errors.New("redis client is nil (forgotten initialize?)")
 
 func New(cfgName string) redis.UniversalClient {
 	cfg := &redis.UniversalOptions{

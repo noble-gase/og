@@ -10,7 +10,7 @@ func Init() {
 
 func UC() redis.UniversalClient {
 	if uc == nil {
-		panic(ErrCacheNil)
+		panic(ErrClientNil)
 	}
 	return uc
 }
