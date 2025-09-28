@@ -7,11 +7,8 @@ import (
 	"log/slog"
 	"runtime/debug"
 
-	"{{.Module}}/pkg/db"
-
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/spf13/viper"
 )
 
 var client *Client
@@ -23,10 +20,9 @@ func DB() *Client {
 	return client
 }
 
-func Init(cfgName string) {
-	name := viper.GetString(cfgName + ".driver")
-	driver := sql.OpenDB(name, db.New(cfgName))
-	client = NewClient(Driver(dialect.DebugWithContext(driver, func(ctx context.Context, v ...any) {
+func Init(driver string, db *sql.DB) {
+	entDB := sql.OpenDB(driver, db)
+	client = NewClient(Driver(dialect.DebugWithContext(entDB, func(ctx context.Context, v ...any) {
 		slog.InfoContext(ctx, fmt.Sprint(v...))
 	})))
 }
