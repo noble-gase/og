@@ -2,13 +2,14 @@ package {{.AppName}}
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"runtime/debug"
 
 	"entgo.io/ent/dialect"
-	"entgo.io/ent/dialect/sql"
+	entSQL "entgo.io/ent/dialect/sql"
 )
 
 var client *Client
@@ -21,7 +22,7 @@ func DB() *Client {
 }
 
 func Init(driver string, db *sql.DB) {
-	entDB := sql.OpenDB(driver, db)
+	entDB := entSQL.OpenDB(driver, db)
 	client = NewClient(Driver(dialect.DebugWithContext(entDB, func(ctx context.Context, v ...any) {
 		slog.InfoContext(ctx, fmt.Sprint(v...))
 	})))
