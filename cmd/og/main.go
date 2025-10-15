@@ -79,7 +79,7 @@ func new() *cobra.Command {
 				// 判断是否存在go.mod
 				_, err := os.Stat("go.mod")
 				if err == nil || !os.IsNotExist(err) {
-					log.Fatalln("🐛 the current directory already exists go.mod, please confirm!")
+					log.Fatalln("👿 the current directory already exists go.mod, please confirm!")
 				}
 				if len(mod) == 0 {
 					mod, err = internal.GetCurDir()
