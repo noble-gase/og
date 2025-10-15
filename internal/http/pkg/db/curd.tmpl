@@ -97,7 +97,7 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 //	db.FindAll[*model.Demo](ctx, db, stmt)
 //
 //	语句示例：
-//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%"))
+//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
 func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
 	if db == nil {
 		return nil, ErrDbNil
@@ -141,10 +141,10 @@ func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error)
 //	db.Paginate[*model.Demo](ctx, db, count, query, 1, 10)
 //
 //	[count] 语句示例：
-//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%"))
+//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
 //
 //	[query] 语句示例：
-//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%"))
+//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
 func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStatement, page, size int) ([]T, int64, error) {
 	if db == nil {
 		return nil, 0, ErrDbNil
