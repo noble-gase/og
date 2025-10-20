@@ -44,7 +44,7 @@ func New(cfgName string) redis.UniversalClient {
 	// verify connection
 	if err := client.Ping(ctx).Err(); err != nil {
 		_ = client.Close()
-		panic(fmt.Errorf("Redis (%s) init failed: %w", cfgName, err))
+		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
 	}
 
 	closes.Add(cfgName, closes.P80, func() error {

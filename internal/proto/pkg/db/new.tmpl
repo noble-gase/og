@@ -30,7 +30,7 @@ func New(cfgName string) *sql.DB {
 
 	db, err := sqls.NewDB(cfg)
 	if err != nil {
-		panic(fmt.Errorf("DB (%s) init failed: %w", cfgName, err))
+		panic(fmt.Errorf("DB(%s) init failed: %w", cfgName, err))
 	}
 
 	closes.Add(cfgName, closes.P90, func() error {
