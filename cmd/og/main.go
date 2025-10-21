@@ -79,25 +79,25 @@ func new() *cobra.Command {
 				// 判断是否存在go.mod
 				_, err := os.Stat("go.mod")
 				if err == nil || !os.IsNotExist(err) {
-					log.Fatalln("👿 the current directory already exists go.mod, please confirm!")
+					log.Fatalln("👿 The current directory already exists go.mod, please confirm!")
 				}
 				if len(mod) == 0 {
 					mod, err = internal.GetCurDir()
 					if err != nil {
-						log.Fatalln("🐛 failed to get the current directory:", internal.FmtErr(err))
+						log.Fatalln("🐛 Failed to get the current directory:", internal.FmtErr(err))
 					}
 				}
 			} else {
 				// 判断目录是否为空
 				if path, ok := internal.IsDirEmpty(workDir); !ok {
-					log.Fatalf("👿 the directory(%s) is not empty, please confirm!", path)
+					log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
 				}
 				if len(mod) == 0 {
 					mod = workDir
 				}
 			}
 			// 创建项目文件
-			fmt.Println("🍺 create project files")
+			fmt.Println("🍺 Create project files")
 			if grpc {
 				internal.InitGrpcProject(workDir, mod, apps...)
 			} else {
@@ -118,7 +118,7 @@ func new() *cobra.Command {
 			if err := modTidy.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 project creation completed! please read README")
+			fmt.Println("🍺 Project creation completed! please read README")
 		},
 	}
 	// 注册参数
@@ -155,30 +155,30 @@ func app() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("⌛️ parse go.mod")
+			fmt.Println("⌛️ Parse go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")
 			if err != nil {
-				log.Fatalln("🐛 failed to read go.mod file:", internal.FmtErr(err))
+				log.Fatalln("🐛 Failed to read go.mod file:", internal.FmtErr(err))
 			}
 			// 解析 go.mod 文件
 			f, err := modfile.Parse("go.mod", data, nil)
 			if err != nil {
-				log.Fatalln("🐛 failed to parse go.mod file:", internal.FmtErr(err))
+				log.Fatalln("🐛 Failed to parse go.mod file:", internal.FmtErr(err))
 			}
 			// 创建应用文件
-			fmt.Println("🍺 create application files")
+			fmt.Println("🍺 Create application files")
 			if grpc {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
-						log.Fatalf("👿 the directory(%s) is not empty, please confirm!", path)
+						log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
 					}
 					internal.InitGrpcApp(".", f.Module.Mod.Path, name)
 				}
 			} else {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
-						log.Fatalf("👿 the directory(%s) is not empty, please confirm!", path)
+						log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
 					}
 					internal.InitHttpApp(".", f.Module.Mod.Path, name, proto)
 				}
@@ -190,7 +190,7 @@ func app() *cobra.Command {
 			if err := modTidy.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 application creation completed! please read README")
+			fmt.Println("🍺 Application creation completed! please read README")
 		},
 	}
 	// 注册参数
@@ -212,29 +212,29 @@ func ent() *cobra.Command {
 			"og ent foo bar",
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("⌛️ parse go.mod")
+			fmt.Println("⌛️ Parse go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")
 			if err != nil {
-				log.Fatalln("🐛 failed to read go.mod file:", internal.FmtErr(err))
+				log.Fatalln("🐛 Failed to read go.mod file:", internal.FmtErr(err))
 			}
 			// 解析 go.mod 文件
 			f, err := modfile.Parse("go.mod", data, nil)
 			if err != nil {
-				log.Fatalln("🐛 failed to parse go.mod file:", internal.FmtErr(err))
+				log.Fatalln("🐛 Failed to parse go.mod file:", internal.FmtErr(err))
 			}
 			// 创建Ent文件
-			fmt.Println("🍺 create ent file")
+			fmt.Println("🍺 Create ent file")
 			if len(args) != 0 {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/ent/" + name); !ok {
-						log.Fatalf("👿 the directory(%s) is not empty, please confirm!", path)
+						log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
 					}
 					internal.InitEnt(".", f.Module.Mod.Path, name)
 				}
 			} else {
 				if path, ok := internal.IsDirEmpty("internal/ent"); !ok {
-					log.Fatalf("👿 the directory(%s) is not empty, please confirm!", path)
+					log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
 				}
 				internal.InitEnt(".", f.Module.Mod.Path)
 			}
@@ -246,18 +246,18 @@ func ent() *cobra.Command {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
 			// ent generate
-			fmt.Println("⌛️ ent generate")
+			fmt.Println("⌛️ Ent generate")
 			if len(args) != 0 {
 				for _, name := range args {
 					entGen := exec.Command("go", "generate", "./internal/ent/"+name)
 					if err := entGen.Run(); err != nil {
-						log.Fatalln("🐛 ent generate failed:", internal.FmtErr(err))
+						log.Fatalln("🐛 Ent generate failed:", internal.FmtErr(err))
 					}
 				}
 			} else {
 				entGen := exec.Command("go", "generate", "./internal/ent")
 				if err := entGen.Run(); err != nil {
-					log.Fatalln("🐛 ent generate failed:", internal.FmtErr(err))
+					log.Fatalln("🐛 Ent generate failed:", internal.FmtErr(err))
 				}
 			}
 			// go mod tidy
@@ -267,7 +267,7 @@ func ent() *cobra.Command {
 			if err := modClean.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 ent module creation completed! please read README")
+			fmt.Println("🍺 Ent module creation completed! please read README")
 		},
 	}
 	return cmd
