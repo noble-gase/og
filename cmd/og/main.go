@@ -15,8 +15,8 @@ import (
 func main() {
 	cmd := &cobra.Command{
 		Use:     "og",
-		Short:   "project scaffolding",
-		Long:    "project scaffolding, quickly create a Go project",
+		Short:   "project scaffold",
+		Long:    "project scaffold, quickly create a Go project",
 		Version: "v0.6.2",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
@@ -26,7 +26,7 @@ func main() {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("🐹 Welcome to use noble-gase[Go] scaffolding")
+			fmt.Println("🐹 Welcome to use noble-gase[Go] scaffold")
 		},
 	}
 	// 注册命令
