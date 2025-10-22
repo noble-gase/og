@@ -21,19 +21,19 @@ func main() {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
-					log.Fatalln("mkdir failed:", internal.FmtErr(err))
+					log.Fatalln("🐛 Mkdir failed:", internal.FmtErr(err))
 				}
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("welcome to use noble-gase[Go] scaffolding")
+			fmt.Println("🐹 Welcome to use noble-gase[Go] scaffolding")
 		},
 	}
 	// 注册命令
 	cmd.AddCommand(new(), app(), ent())
 	// 执行
 	if err := cmd.Execute(); err != nil {
-		log.Fatalln("cmd execute failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Cmd execute failed:", internal.FmtErr(err))
 	}
 }
 
@@ -97,7 +97,7 @@ func new() *cobra.Command {
 				}
 			}
 			// 创建项目文件
-			fmt.Println("🍺 Create project files")
+			fmt.Println("🐹 Create project files")
 			if grpc {
 				internal.InitGrpcProject(workDir, mod, apps...)
 			} else {
@@ -118,7 +118,7 @@ func new() *cobra.Command {
 			if err := modTidy.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 Project creation completed! please read README")
+			fmt.Println("🐹 Project creation completed! please read README")
 		},
 	}
 	// 注册参数
@@ -167,7 +167,7 @@ func app() *cobra.Command {
 				log.Fatalln("🐛 Failed to parse go.mod file:", internal.FmtErr(err))
 			}
 			// 创建应用文件
-			fmt.Println("🍺 Create application files")
+			fmt.Println("🐹 Create application files")
 			if grpc {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
@@ -190,7 +190,7 @@ func app() *cobra.Command {
 			if err := modTidy.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 Application creation completed! please read README")
+			fmt.Println("🐹 Application creation completed! please read README")
 		},
 	}
 	// 注册参数
@@ -224,7 +224,7 @@ func ent() *cobra.Command {
 				log.Fatalln("🐛 Failed to parse go.mod file:", internal.FmtErr(err))
 			}
 			// 创建Ent文件
-			fmt.Println("🍺 Create ent file")
+			fmt.Println("🐹 Create ent file")
 			if len(args) != 0 {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/ent/" + name); !ok {
@@ -267,7 +267,7 @@ func ent() *cobra.Command {
 			if err := modClean.Run(); err != nil {
 				log.Fatalln("🐛 go mod tidy failed:", internal.FmtErr(err))
 			}
-			fmt.Println("🍺 Ent module creation completed! please read README")
+			fmt.Println("🐹 Ent module creation completed! please read README")
 		},
 	}
 	return cmd

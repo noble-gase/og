@@ -144,7 +144,7 @@ func main() {
 func genGetter(path string) {
 	stat, err := os.Stat(path)
 	if err != nil {
-		log.Fatalln("path stat failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Path stat failed:", internal.FmtErr(err))
 	}
 
 	var dir string
@@ -165,7 +165,7 @@ func genGetter(path string) {
 		return true
 	}, parser.AllErrors)
 	if err != nil {
-		log.Fatalln("package file-parse failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Package file-parse failed:", internal.FmtErr(err))
 	}
 
 	var files []*ast.File
@@ -187,7 +187,7 @@ func genGetter(path string) {
 		DisableUnusedImportCheck: true,
 	}
 	if _, err = conf.Check("", fset, files, info); err != nil {
-		log.Fatalln("package type-check failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Package type-check failed:", internal.FmtErr(err))
 	}
 
 	// Generate file
@@ -259,15 +259,15 @@ func genFile(node *ast.File, info *types.Info, filename string) {
 	var buf bytes.Buffer
 	t := template.Must(template.New("getters").Parse(tmpl))
 	if err := t.Execute(&buf, gen); err != nil {
-		log.Fatalln("template execute failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Template execute failed:", internal.FmtErr(err))
 	}
 
 	// Write to a file
 	outputFile := strings.ReplaceAll(sourceFile, ".go", suffix)
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0o755); err != nil {
-		log.Fatalln("write to file failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Write to file failed:", internal.FmtErr(err))
 	}
-	fmt.Println("Generated code saved to", outputFile)
+	fmt.Println("🐹 Generated code saved to", outputFile)
 }
 
 func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []GenType) (map[string]struct{}, Struct) {

@@ -353,7 +353,7 @@ func FmtErr(err error) error {
 		name := fn.Name()
 		funcName = name[strings.Index(name, ".")+1:]
 	}
-	return fmt.Errorf("[%s(%s:%d)] %w", funcName, file, line, err)
+	return fmt.Errorf("🐛 [%s(%s:%d)] %w", funcName, file, line, err)
 }
 
 // CmdExamples formats the given examples to the cli.
