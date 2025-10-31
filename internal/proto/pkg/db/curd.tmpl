@@ -12,8 +12,14 @@ import (
 
 // Create 创建记录
 //
-//	语句示例：
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 语句示例
 //	table.Demo.INSERT(table.Demo.Name).VALUES("demo")
+//
+//	// 创建方法
+//	db.Create(ctx, db.DB(), stmt)
 func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
 	if db == nil {
 		return 0, ErrDbNil
@@ -31,8 +37,14 @@ func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error
 
 // Update 更新记录
 //
-//	语句示例：
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 语句示例
 //	table.Demo.UPDATE(table.Demo.Name).SET("demo").WHERE(table.Demo.ID.EQ(Int64(1)))
+//
+//	// 更新方法
+//	db.Update(ctx, db.DB(), stmt)
 func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error) {
 	if db == nil {
 		return 0, ErrDbNil
@@ -50,8 +62,14 @@ func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error
 
 // Delete 删除记录
 //
-//	语句示例：
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 语句示例
 //	table.Demo.DELETE().WHERE(table.Demo.ID.EQ(Int64(1)))
+//
+//	// 删除方法
+//	db.Delete(ctx, db.DB(), stmt)
 func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) error {
 	if db == nil {
 		return ErrDbNil
@@ -66,10 +84,14 @@ func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) error {
 
 // FindOne 查询一条记录
 //
-//	db.FindOne[model.Demo](ctx, db, stmt)
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
 //
-//	语句示例：
-//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.ID.EQ(Int64(1)))
+//	// 语句示例
+//	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.ID.EQ(Int64(1)))
+//
+//	// 查询方法
+//	db.FindOne[model.Demo](ctx, db.DB(), stmt)
 func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, error) {
 	if db == nil {
 		return nil, ErrDbNil
@@ -92,12 +114,16 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 
 // FindAll 查询多条记录
 //
-//	db.FindAll[model.Demo](ctx, db, stmt)
-//	或者
-//	db.FindAll[*model.Demo](ctx, db, stmt)
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
 //
-//	语句示例：
-//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//	// 语句示例
+//	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//
+//	// 查询方法
+//	db.FindAll[model.Demo](ctx, db.DB(), stmt)
+//	// 或
+//	db.FindAll[*model.Demo](ctx, db.DB(), stmt)
 func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
 	if db == nil {
 		return nil, ErrDbNil
@@ -115,8 +141,14 @@ func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T,
 
 // Count 返回记录数
 //
-//	语句示例：
-//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo)
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 语句示例
+//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//
+//	// 查询方法
+//	db.Count(ctx, db.DB(), stmt)
 func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error) {
 	if db == nil {
 		return 0, ErrDbNil
@@ -136,15 +168,19 @@ func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error)
 
 // Paginate 分页查询
 //
-//	db.Paginate[model.Demo](ctx, db, count, query, 1, 10)
-//	或者
-//	db.Paginate[*model.Demo](ctx, db, count, query, 1, 10)
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
 //
-//	[count] 语句示例：
+//	// 语句示例 (count)
 //	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
 //
-//	[query] 语句示例：
-//	SELECT(STAR).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//	// 语句示例 (query)
+//	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//
+//	// 查询方法
+//	db.Paginate[model.Demo](ctx, db.DB(), count, query, 1, 10)
+//	// 或
+//	db.Paginate[*model.Demo](ctx, db.DB(), count, query, 1, 10)
 func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStatement, page, size int) ([]T, int64, error) {
 	if db == nil {
 		return nil, 0, ErrDbNil

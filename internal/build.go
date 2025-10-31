@@ -237,8 +237,8 @@ func genOutput(root, path string, appname ...string) string {
 	switch name {
 	case "dockerfile.tmpl":
 		if len(appname) != 0 {
+			builder.WriteString("Dockerfile.")
 			builder.WriteString(appname[0])
-			builder.WriteString(".dockerfile")
 		} else {
 			builder.WriteString("Dockerfile")
 		}
@@ -246,7 +246,7 @@ func genOutput(root, path string, appname ...string) string {
 	case "dockerun.sh":
 		if len(appname) != 0 {
 			builder.WriteString(appname[0])
-			builder.WriteString(".dockerun.sh")
+			builder.WriteString("_dockerun.sh")
 		} else {
 			builder.WriteString("dockerun.sh")
 		}
