@@ -60,7 +60,7 @@ func InitHttpProject(root, mod string, pb bool, apps ...string) {
 		params.ApiName = name
 		params.AppPkg = "app/" + name
 		params.AppName = name
-		params.DockerF = name + ".dockerfile"
+		params.DockerF = "Dockerfile." + name
 
 		if pb {
 			genApi(root, params, fsys, name)
@@ -82,7 +82,7 @@ func InitHttpApp(root, mod, name string, pb bool) {
 		ApiName: name,
 		AppPkg:  "app/" + name,
 		AppName: name,
-		DockerF: name + ".dockerfile",
+		DockerF: "Dockerfile." + name,
 	}
 
 	if pb {
@@ -117,7 +117,7 @@ func InitGrpcProject(root, mod string, apps ...string) {
 		params.ApiName = name
 		params.AppPkg = "app/" + name
 		params.AppName = name
-		params.DockerF = name + ".dockerfile"
+		params.DockerF = "Dockerfile." + name
 
 		genApi(root, params, grpc.FS, name)
 		genApp(root, params, grpc.FS, name)
@@ -132,7 +132,7 @@ func InitGrpcApp(root, mod, name string) {
 		ApiName: name,
 		AppPkg:  "app/" + name,
 		AppName: name,
-		DockerF: name + ".dockerfile",
+		DockerF: "Dockerfile." + name,
 	}
 
 	genApi(root, params, grpc.FS, name)
