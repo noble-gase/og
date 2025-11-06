@@ -42,7 +42,7 @@ func serving(ctx context.Context) {
 	// 创建路由
 	r := chi.NewRouter()
 	// middleware
-	r.Use(withCors.Handler, middleware.TraceId, middleware.Recovery)
+	r.Use(withCors.Handler, middleware.Header, middleware.Recovery)
 	// pprof
 	r.Mount("/debug", chi_middleware.Profiler())
 	// 注册路由

@@ -22,7 +22,8 @@ func TraceId(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler g
 	var traceId string
 	if vals := md.Get(XTraceId); len(vals) != 0 {
 		traceId = vals[0]
-	} else {
+	}
+	if len(traceId) == 0 {
 		traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
 		md.Set(XTraceId, traceId)
 	}

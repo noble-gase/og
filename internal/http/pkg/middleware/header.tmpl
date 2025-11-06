@@ -10,8 +10,8 @@ import (
 
 const XTraceId = "x-trace-id"
 
-// TraceId is a middleware that injects a trace ID into the context of each request.
-func TraceId(next http.Handler) http.Handler {
+// Header is a middleware that injects http headers into the context of each request.
+func Header(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -20,15 +20,17 @@ func TraceId(next http.Handler) http.Handler {
 			md = metadata.Pairs()
 		}
 
+		for k, v := range r.Header {
+			md.Set(k, v...)
+		}
+
 		// traceId
 		var traceId string
 		if vals := md.Get(XTraceId); len(vals) != 0 {
 			traceId = vals[0]
-		} else {
-			traceId = r.Header.Get(XTraceId)
-			if len(traceId) == 0 {
-				traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
-			}
+		}
+		if len(traceId) == 0 {
+			traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
 			md.Set(XTraceId, traceId)
 		}
 
@@ -39,4 +41,3 @@ func TraceId(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(metadata.NewIncomingContext(ctx, md)))
 	})
 }
-
