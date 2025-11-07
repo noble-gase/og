@@ -5,11 +5,10 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/noble-gase/ne/helper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
-
-const XTraceId = "x-trace-id"
 
 // TraceId is a middleware that injects a trace ID into the context of each request.
 func TraceId(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
@@ -20,16 +19,16 @@ func TraceId(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler g
 
 	// traceId
 	var traceId string
-	if vals := md.Get(XTraceId); len(vals) != 0 {
+	if vals := md.Get(helper.XTraceId); len(vals) != 0 {
 		traceId = vals[0]
 	}
 	if len(traceId) == 0 {
 		traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
-		md.Set(XTraceId, traceId)
+		md.Set(helper.XTraceId, traceId)
 	}
 
 	// set response header
-	_ = grpc.SetHeader(ctx, metadata.Pairs(XTraceId, traceId))
+	_ = grpc.SetHeader(ctx, metadata.Pairs(helper.XTraceId, traceId))
 
 	return handler(metadata.NewIncomingContext(ctx, md), req)
 }

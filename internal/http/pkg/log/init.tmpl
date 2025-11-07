@@ -16,7 +16,6 @@ import (
 // Init 初始化日志
 func Init() {
 	ho := &slog.HandlerOptions{
-		AddSource: true,
 		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
 			if attr.Key == slog.TimeKey {
 				return slog.String("time", attr.Value.Time().In(time.Local).Format(time.DateTime))

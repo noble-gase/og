@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"{{.Module}}/{{.ApiPkg}}"
-	"{{.Module}}/pkg/middleware"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/noble-gase/ne/cors"
+	"github.com/noble-gase/ne/helper"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -29,7 +29,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *htt
 			return strings.ToLower(s), true
 		}),
 		runtime.WithOutgoingHeaderMatcher(func(s string) (string, bool) {
-			if s == middleware.XTraceId {
+			if s == helper.XTraceId {
 				return s, true
 			}
 			return runtime.MetadataHeaderPrefix + s, true
@@ -55,7 +55,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *htt
 		panic(fmt.Errorf("NewHttpServer: %w", err))
 	}
 	// With CORS
-	withCors := cors.New(cors.ACEH(middleware.XTraceId)).Handler(mux)
+	withCors := cors.New(cors.ACEH(helper.XTraceId)).Handler(mux)
 	// Serve HTTP server
 	srv := &http.Server{
 		Addr:         addr,

@@ -47,9 +47,10 @@ func Log(next http.Handler) http.Handler {
 		defer func() {
 			slog.InfoContext(r.Context(), r.RequestURI,
 				slog.String("method", r.Method),
-				slog.String("ip", r.RemoteAddr),
+				slog.Any("header", r.Header),
 				slog.String("request", body),
 				slog.String("response", strings.TrimSuffix(buf.String(), "\n")),
+				slog.String("remote_addr", r.RemoteAddr),
 				slog.Int("status", ww.Status()),
 				slog.String("duration", time.Since(now).String()),
 			)

@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/noble-gase/ne/helper"
 	"github.com/noble-gase/ne/metadata"
 )
-
-const XTraceId = "x-trace-id"
 
 // Header is a middleware that injects http headers into the context of each request.
 func Header(next http.Handler) http.Handler {
@@ -26,16 +25,16 @@ func Header(next http.Handler) http.Handler {
 
 		// traceId
 		var traceId string
-		if vals := md.Get(XTraceId); len(vals) != 0 {
+		if vals := md.Get(helper.XTraceId); len(vals) != 0 {
 			traceId = vals[0]
 		}
 		if len(traceId) == 0 {
 			traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
-			md.Set(XTraceId, traceId)
+			md.Set(helper.XTraceId, traceId)
 		}
 
 		// set response header
-		w.Header().Set(XTraceId, traceId)
+		w.Header().Set(helper.XTraceId, traceId)
 
 		// reset request context
 		next.ServeHTTP(w, r.WithContext(metadata.NewIncomingContext(ctx, md)))

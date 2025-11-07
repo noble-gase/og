@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/noble-gase/ne/helper"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -21,12 +22,8 @@ func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 	// metadata
 	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md) != 0 {
-		for k, v := range md {
-			if len(v) == 1 {
-				r.AddAttrs(slog.String(k, v[0]))
-			} else {
-				r.AddAttrs(slog.Any(k, v))
-			}
+		if traceId := md.Get(helper.XTraceId); len(traceId) != 0 {
+			r.AddAttrs(slog.String(helper.XTraceId, traceId[0]))
 		}
 	}
 
