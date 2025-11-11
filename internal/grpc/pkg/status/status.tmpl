@@ -10,5 +10,5 @@ import (
 
 func Error(ctx context.Context, err error) error {
 	code := codes.FromError(err)
-	return status.Error(gcodes.Code(code.Val()), code.Msg())
+	return status.Error(gcodes.Code(code.Value()), code.Message())
 }

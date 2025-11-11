@@ -54,7 +54,7 @@ func _GreeterService_SayHello(svc GreeterServiceHttpServer) http.HandlerFunc {
 		// call service
 		resp, err := svc.SayHello(ctx, req)
 		if err != nil {
-			result.Err(err, resp).JSON(w, r)
+			result.Err(err).JSON(w, r)
 			return
 		}
 		result.OK(resp).JSON(w, r)

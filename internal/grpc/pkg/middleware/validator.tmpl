@@ -15,7 +15,7 @@ func Validator(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler gr
 	msg, ok := req.(proto.Message)
 	if ok {
 		if err := protos.Validate(msg); err != nil {
-			return nil, status.Error(ctx, code.ErrParams.Wrap(err.Error()))
+			return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
 		}
 	}
 	return handler(ctx, req)

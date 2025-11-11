@@ -15,7 +15,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 
 	req := new(greeter.ReqHello)
 	if err := helper.BindJSON(r, req); err != nil {
-		result.Err(code.ErrParams.Wrap(err.Error())).JSON(w, r)
+		result.Err(code.ErrParams.WithMsg(err.Error())).JSON(w, r)
 		return
 	}
 	greeter.Hello(ctx, req).JSON(w, r)
