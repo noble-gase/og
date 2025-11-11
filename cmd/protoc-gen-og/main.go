@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.2.0"
+	version = "v0.2.1"
 	suffix  = "_http.pb.go"
 )
 
@@ -211,7 +211,7 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("// call service")
 		gf.P("resp, err := svc.", m.GoName, "(ctx, req)")
 		gf.P("if err != nil {")
-		gf.P(resultPkg.Ident("Err"), "(err, resp).JSON(w, r)")
+		gf.P(resultPkg.Ident("Err"), "(err).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")
 		gf.P(resultPkg.Ident("OK"), "(resp).JSON(w, r)")
