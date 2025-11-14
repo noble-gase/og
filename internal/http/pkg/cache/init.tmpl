@@ -8,7 +8,7 @@ func Init() {
 	uc = New("redis")
 }
 
-func UC() redis.UniversalClient {
+func R() redis.UniversalClient {
 	if uc == nil {
 		panic(ErrClientNil)
 	}

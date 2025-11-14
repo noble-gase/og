@@ -8,6 +8,7 @@ import (
 
 	"github.com/noble-gase/ne/closes"
 	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9/maintnotifications"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
@@ -17,6 +18,9 @@ var ErrClientNil = errors.New("redis client is nil (forgotten initialize?)")
 func New(cfgName string) redis.UniversalClient {
 	cfg := &redis.UniversalOptions{
 		Addrs: viper.GetStringSlice(cfgName + ".addrs"),
+		MaintNotificationsConfig: &maintnotifications.Config{
+			Mode: maintnotifications.ModeDisabled,
+		},
 	}
 
 	opts := viper.GetStringMap(cfgName + ".options")
