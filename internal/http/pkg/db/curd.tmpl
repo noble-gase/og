@@ -112,6 +112,46 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 	return &dest, nil
 }
 
+// FindOneF 查询一条记录
+//
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 查询方法
+//	return db.FindOneF[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
+//		return query.FROM(table.Demo.Table).WHERE(table.Demo.ID.EQ(Int64(1)))
+//	}, table.Demo.AllColumns)
+func FindOneF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, columns ...Projection) (*T, error) {
+	if db == nil {
+		return nil, ErrDbNil
+	}
+
+	columnLen := len(columns)
+	if columnLen == 0 {
+		return nil, errors.New("missing table columns")
+	}
+
+	var stmt SelectStatement
+	if columnLen == 1 {
+		stmt = SELECT(columns[0])
+	} else {
+		stmt = SELECT(columns[0], columns[1:]...)
+	}
+	stmt = stmt.LIMIT(1)
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	var dest T
+	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
+		if !errors.Is(err, qrm.ErrNoRows) {
+			return nil, err
+		}
+		return nil, nil
+	}
+	return &dest, nil
+}
+
 // FindAll 查询多条记录
 //
 //	// 导入模块
@@ -122,11 +162,45 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 //
 //	// 查询方法
 //	db.FindAll[model.Demo](ctx, db.DB(), stmt)
-//	// 或
-//	db.FindAll[*model.Demo](ctx, db.DB(), stmt)
 func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
 	if db == nil {
 		return nil, ErrDbNil
+	}
+
+	// SQL日志
+	slog.InfoContext(ctx, stmt.DebugSql())
+
+	var dest []T
+	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
+		return nil, err
+	}
+	return dest, nil
+}
+
+// FindAllF 查询多条记录
+//
+//	// 导入模块
+//	import . "github.com/go-jet/jet/v2/mysql"
+//
+//	// 查询方法
+//	return db.FindAllF[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
+//		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//	}, table.Demo.AllColumns)
+func FindAllF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, columns ...Projection) ([]T, error) {
+	if db == nil {
+		return nil, ErrDbNil
+	}
+
+	columnLen := len(columns)
+	if columnLen == 0 {
+		return nil, errors.New("missing table columns")
+	}
+
+	var stmt SelectStatement
+	if columnLen == 1 {
+		stmt = SELECT(columns[0])
+	} else {
+		stmt = SELECT(columns[0], columns[1:]...)
 	}
 
 	// SQL日志
@@ -144,15 +218,16 @@ func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T,
 //	// 导入模块
 //	import . "github.com/go-jet/jet/v2/mysql"
 //
-//	// 语句示例
-//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
-//
 //	// 查询方法
-//	db.Count(ctx, db.DB(), stmt)
-func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error) {
+//	db.Count(ctx, db.DB(), func(count SelectStatement) SelectStatement {
+//		return count.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//	})
+func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) SelectStatement) (int64, error) {
 	if db == nil {
 		return 0, ErrDbNil
 	}
+
+	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
 	// SQL日志
 	slog.InfoContext(ctx, stmt.DebugSql())
@@ -171,28 +246,24 @@ func Count(ctx context.Context, db *sql.DB, stmt SelectStatement) (int64, error)
 //	// 导入模块
 //	import . "github.com/go-jet/jet/v2/mysql"
 //
-//	// 语句示例 (count)
-//	SELECT(COUNT(STAR).AS("count")).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
-//
-//	// 语句示例 (query)
-//	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%demo%")))
-//
 //	// 查询方法
-//	db.Paginate[model.Demo](ctx, db.DB(), count, query, 1, 10)
-//	// 或
-//	db.Paginate[*model.Demo](ctx, db.DB(), count, query, 1, 10)
-func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStatement, page, size int) ([]T, int64, error) {
+//	db.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
+//		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%demo%")))
+//	}, page, size, table.Demo.AllColumns)
+func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, columns ...Projection) ([]T, int64, error) {
 	if db == nil {
 		return nil, 0, ErrDbNil
 	}
 
+	stmtCount := fn(SELECT(COUNT(STAR).AS("count")))
+
 	// SQL日志
-	slog.InfoContext(ctx, count.DebugSql())
+	slog.InfoContext(ctx, stmtCount.DebugSql())
 
 	var total struct {
 		Count int64
 	}
-	if err := count.QueryContext(ctx, db, &total); err != nil {
+	if err := stmtCount.QueryContext(ctx, db, &total); err != nil {
 		return nil, 0, err
 	}
 
@@ -205,12 +276,23 @@ func Paginate[T any](ctx context.Context, db *sql.DB, count, query SelectStateme
 			size = 20
 		}
 
-		query = query.LIMIT(int64(size)).OFFSET(int64((page - 1) * size))
+		columnLen := len(columns)
+		if columnLen == 0 {
+			return nil, 0, errors.New("missing table columns")
+		}
+
+		var stmtQuery SelectStatement
+		if columnLen == 1 {
+			stmtQuery = SELECT(columns[0])
+		} else {
+			stmtQuery = SELECT(columns[0], columns[1:]...)
+		}
+		stmtQuery = fn(stmtQuery).LIMIT(int64(size)).OFFSET(int64((page - 1) * size))
 
 		// SQL日志
-		slog.InfoContext(ctx, query.DebugSql())
+		slog.InfoContext(ctx, stmtQuery.DebugSql())
 
-		if err := query.QueryContext(ctx, db, &dest); err != nil {
+		if err := stmtQuery.QueryContext(ctx, db, &dest); err != nil {
 			return nil, 0, err
 		}
 	}
