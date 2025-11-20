@@ -1,4 +1,4 @@
-package curd
+package mysql
 
 import (
 	"context"
@@ -8,7 +8,24 @@ import (
 
 	. "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/noble-gase/ne/sqls"
 )
+
+// M 用于 INSERT & UPDATE
+type M map[Column]any
+
+func (m M) Split() (cols ColumnList, vals []any) {
+	cap := len(m)
+
+	cols = make(ColumnList, 0, cap)
+	vals = make([]any, 0, cap)
+
+	for k, v := range m {
+		cols = append(cols, k)
+		vals = append(vals, v)
+	}
+	return
+}
 
 // Create 创建记录
 //
@@ -24,10 +41,10 @@ import (
 //	table.Demo.INSERT(table.Demo.Name).MODELS([]model.Demo{{Name: "hello"}, {Name: "world"}})
 //
 //	// 创建方法
-//	db.Create(ctx, db.DB(), stmt)
+//	mysql.Create(ctx, db.DB(), stmt)
 func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	ret, err := stmt.ExecContext(ctx, db)
 	if err != nil {
@@ -48,10 +65,10 @@ func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error
 //	table.Demo.UPDATE(table.Demo.Name).MODEL(model.Demo{Name: "hello"}).WHERE(table.Demo.ID.EQ(Int64(1)))
 //
 //	// 更新方法
-//	db.Update(ctx, db.DB(), stmt)
+//	mysql.Update(ctx, db.DB(), stmt)
 func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error) {
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	ret, err := stmt.ExecContext(ctx, db)
 	if err != nil {
@@ -71,10 +88,10 @@ func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error
 //	table.Demo.DELETE().WHERE(table.Demo.ID.EQ(Int64(1)))
 //
 //	// 删除方法
-//	db.Delete(ctx, db.DB(), stmt)
+//	mysql.Delete(ctx, db.DB(), stmt)
 func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) (int64, error) {
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	ret, err := stmt.ExecContext(ctx, db)
 	if err != nil {
@@ -95,41 +112,12 @@ func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) (int64, error
 //	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.ID.EQ(Int64(1)))
 //
 //	// 查询方法
-//	db.FindOne[model.Demo](ctx, db.DB(), stmt)
+//	mysql.FindOne[model.Demo](ctx, db.DB(), stmt)
 func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, error) {
 	stmt = stmt.LIMIT(1)
 
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
-
-	var dest T
-	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
-		if !errors.Is(err, qrm.ErrNoRows) {
-			return nil, err
-		}
-		return nil, nil
-	}
-	return &dest, nil
-}
-
-// FindOneF 查询一条记录
-//
-//	// 导入模块
-//	import . "github.com/go-jet/jet/v2/mysql"
-//
-//	// 查询方法
-//	return db.FindOneF[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
-//		return query.FROM(table.Demo.Table).WHERE(table.Demo.ID.EQ(Int64(1)))
-//	}, table.Demo.AllColumns...)
-func FindOneF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, cols ...Column) (*T, error) {
-	if len(cols) == 0 {
-		return nil, errors.New("missing table columns")
-	}
-
-	stmt := fn(SELECT(ColumnList(cols))).LIMIT(1)
-
-	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	var dest T
 	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
@@ -151,36 +139,10 @@ func FindOneF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatem
 //	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%hello%")))
 //
 //	// 查询方法
-//	db.FindAll[model.Demo](ctx, db.DB(), stmt)
+//	mysql.FindAll[model.Demo](ctx, db.DB(), stmt)
 func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
-
-	var dest []T
-	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
-		return nil, err
-	}
-	return dest, nil
-}
-
-// FindAllF 查询多条记录
-//
-//	// 导入模块
-//	import . "github.com/go-jet/jet/v2/mysql"
-//
-//	// 查询方法
-//	return db.FindAllF[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
-//		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
-//	}, table.Demo.AllColumns...)
-func FindAllF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, cols ...Column) ([]T, error) {
-	if len(cols) == 0 {
-		return nil, errors.New("missing table columns")
-	}
-
-	stmt := fn(SELECT(ColumnList(cols)))
-
-	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	var dest []T
 	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
@@ -195,14 +157,14 @@ func FindAllF[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatem
 //	import . "github.com/go-jet/jet/v2/mysql"
 //
 //	// 查询方法
-//	db.Count(ctx, db.DB(), func(count SelectStatement) SelectStatement {
+//	mysql.Count(ctx, db.DB(), func(count SelectStatement) SelectStatement {
 //		return count.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
 //	})
 func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) SelectStatement) (int64, error) {
 	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmt.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	var total struct {
 		Count int64
@@ -219,43 +181,41 @@ func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) Selec
 //	import . "github.com/go-jet/jet/v2/mysql"
 //
 //	// 查询方法
-//	db.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
+//	mysql.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
 //		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
-//	}, page, size, table.Demo.AllColumns...)
-func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ...Column) ([]T, int64, error) {
-	if len(cols) == 0 {
-		return nil, 0, errors.New("missing table columns")
-	}
-
-	stmtCount := fn(SELECT(COUNT(STAR).AS("count")))
+//	}, page, size, table.Demo.AllColumns, table.Demo.ID.DESC())
+func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ColumnList, orderBy ...OrderByClause) ([]T, int64, error) {
+	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
 	// SQL日志
-	slog.InfoContext(ctx, UglySQL(stmtCount.DebugSql()))
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	var total struct {
 		Count int64
 	}
-	if err := stmtCount.QueryContext(ctx, db, &total); err != nil {
+	if err := stmt.QueryContext(ctx, db, &total); err != nil {
 		return nil, 0, err
 	}
+	if total.Count == 0 {
+		return []T{}, 0, nil
+	}
+
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 {
+		size = 20
+	}
+	offset := (page - 1) * size
+
+	stmt = fn(SELECT(cols)).ORDER_BY(orderBy...).LIMIT(int64(size)).OFFSET(int64(offset))
+
+	// SQL日志
+	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
 	var dest []T
-	if total.Count > 0 {
-		if page <= 0 {
-			page = 1
-		}
-		if size <= 0 {
-			size = 20
-		}
-
-		stmtQuery := fn(SELECT(ColumnList(cols))).LIMIT(int64(size)).OFFSET(int64((page - 1) * size))
-
-		// SQL日志
-		slog.InfoContext(ctx, UglySQL(stmtQuery.DebugSql()))
-
-		if err := stmtQuery.QueryContext(ctx, db, &dest); err != nil {
-			return nil, 0, err
-		}
+	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
+		return nil, 0, err
 	}
 	return dest, total.Count, nil
 }
