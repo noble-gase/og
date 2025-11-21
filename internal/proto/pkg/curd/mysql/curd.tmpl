@@ -34,11 +34,18 @@ func (m M) Split() (cols ColumnList, vals []any) {
 //
 //	// 语句示例
 //	table.Demo.INSERT(table.Demo.Name).VALUES("hello")
+//	// or
 //	table.Demo.INSERT(table.Demo.Name).MODEL(model.Demo{Name: "hello"})
 //
 //	// 批量插入
-//	table.Demo.INSERT(table.Demo.Name).VALUES("hello").VALUES("world")
-//	table.Demo.INSERT(table.Demo.Name).MODELS([]model.Demo{{Name: "hello"}, {Name: "world"}})
+//	table.Demo.INSERT(table.Demo.Name).
+//		VALUES("hello").
+//		VALUES("world")
+//	// or
+//	table.Demo.INSERT(table.Demo.Name).MODELS([]model.Demo{
+//		{Name: "hello"},
+//		{Name: "world"},
+//	})
 //
 //	// 创建方法
 //	mysql.Create(ctx, db.DB(), stmt)
@@ -62,6 +69,7 @@ func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error
 //
 //	// 语句示例
 //	table.Demo.UPDATE(table.Demo.Name).SET("hello").WHERE(table.Demo.ID.EQ(Int64(1)))
+//	// or
 //	table.Demo.UPDATE(table.Demo.Name).MODEL(model.Demo{Name: "hello"}).WHERE(table.Demo.ID.EQ(Int64(1)))
 //
 //	// 更新方法
@@ -109,6 +117,7 @@ func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) (int64, error
 //
 //	// 语句示例
 //	table.Demo.SELECT(table.Demo.AllColumns).WHERE(table.Demo.ID.EQ(Int64(1)))
+//	// or
 //	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.ID.EQ(Int64(1)))
 //
 //	// 查询方法
@@ -136,6 +145,7 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 //
 //	// 语句示例
 //	table.Demo.SELECT(table.Demo.AllColumns).WHERE(table.Demo.Name.LIKE(String("%hello%")))
+//	// or
 //	SELECT(table.Demo.AllColumns).FROM(table.Demo).WHERE(table.Demo.Name.LIKE(String("%hello%")))
 //
 //	// 查询方法
