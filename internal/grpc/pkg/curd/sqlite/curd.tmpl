@@ -38,7 +38,7 @@ func (m M) Split() (cols ColumnList, vals []any) {
 //	table.Demo.INSERT(table.Demo.Name).MODEL(model.Demo{Name: "hello"}).RETURNING(table.Demo.AllColumns)
 //
 //	// 创建方法
-//	sqlite.Create(ctx, db.DB(), stmt)
+//	sqlite.Create[model.Demo](ctx, db.DB(), stmt)
 func Create[T any](ctx context.Context, db *sql.DB, stmt InsertStatement) (T, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
@@ -65,7 +65,7 @@ func Create[T any](ctx context.Context, db *sql.DB, stmt InsertStatement) (T, er
 //	}).RETURNING(table.Demo.AllColumns)
 //
 //	// 创建方法
-//	sqlite.BatchCreate(ctx, db.DB(), stmt)
+//	sqlite.BatchCreate[model.Demo](ctx, db.DB(), stmt)
 func BatchCreate[T any](ctx context.Context, db *sql.DB, stmt InsertStatement) ([]T, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
