@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/noble-gase/ne/helper"
-	"google.golang.org/grpc/metadata"
 )
 
 var hostname, _ = os.Hostname()
@@ -17,16 +16,10 @@ type contextHandler struct {
 }
 
 func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
-	// hostname
-	r.AddAttrs(slog.String("hostname", hostname))
-
-	// metadata
-	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md) != 0 {
-		if traceId := md.Get(helper.XTraceId); len(traceId) != 0 {
-			r.AddAttrs(slog.String(helper.XTraceId, traceId[0]))
-		}
-	}
-
+	r.AddAttrs(
+		slog.String("hostname", hostname),
+		slog.String(helper.XTraceId, helper.MDTraceIdFromCtx(ctx)),
+	)
 	return h.Handler.Handle(ctx, r)
 }
 

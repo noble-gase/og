@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/noble-gase/ne/conv"
 	"github.com/noble-gase/ne/crypts"
-	"github.com/noble-gase/ne/metadata"
+	"github.com/noble-gase/ne/helper"
 	"github.com/spf13/viper"
 )
 
@@ -69,25 +68,9 @@ func ToAuthToken(id int64, token string) (string, error) {
 }
 
 func GetIdenId(ctx context.Context) int64 {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return 0
-	}
-	vals := md.Get(IdenId)
-	if len(vals) == 0 {
-		return 0
-	}
-	return conv.StrToInt[int64](vals[0])
+	return helper.MDIntFromCtx[int64](ctx, IdenId)
 }
 
 func GetIdenToken(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ""
-	}
-	vals := md.Get(IdenToken)
-	if len(vals) == 0 {
-		return ""
-	}
-	return vals[0]
+	return helper.MDStrFromCtx(ctx, IdenToken)
 }
