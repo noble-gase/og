@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"{{.Module}}/{{.ApiPkg}}"
 	"{{.Module}}/internal/{{.AppPkg}}/service/greeter"
@@ -11,17 +12,24 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 )
 
 func NewGrpcServer() *grpc.Server {
-	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		middleware.TraceId,
-		middleware.Recovery,
-		middleware.Metrics,
-		middleware.Log,
-		middleware.Validator,
-	))
+	srv := grpc.NewServer(
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             5 * time.Second,
+			PermitWithoutStream: true,
+		}),
+		grpc.ChainUnaryInterceptor(
+			middleware.TraceId,
+			middleware.Recovery,
+			middleware.Metrics,
+			middleware.Log,
+			middleware.Validator,
+		),
+	)
 
 	// 服务注册
 	registerGrpc(srv)

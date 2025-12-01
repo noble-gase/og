@@ -15,6 +15,7 @@ import (
 	"github.com/urfave/cli/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 func serve() *cli.Command {
@@ -48,9 +49,16 @@ func serving(ctx context.Context) {
 	time.Sleep(time.Second)
 
 	// serve http
-	conn, err := grpc.NewClient(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(grpcAddr,
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                10 * time.Second,
+			Timeout:             3 * time.Second,
+			PermitWithoutStream: true,
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
-		slog.ErrorContext(ctx, "grpc.NewClient failed", slog.String("error", err.Error()))
+		panic(err)
 	}
 	httpSrv := server.NewHttpServer(ctx, conn, httpAddr)
 	go server.ServeHttp(httpSrv)
