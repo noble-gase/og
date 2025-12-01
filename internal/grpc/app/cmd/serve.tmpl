@@ -46,19 +46,26 @@ func serving(ctx context.Context) {
 	grpcSrv := server.NewGrpcServer()
 	go server.ServeGrpc(grpcSrv, grpcAddr)
 
-	time.Sleep(time.Second)
-
 	// serve http
 	conn, err := grpc.NewClient(grpcAddr,
+		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  time.Second,
+				Multiplier: 1.5,
+				MaxDelay:   time.Minute,
+			},
+			MinConnectTimeout: 10 * time.Second,
+		}),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                10 * time.Second,
-			Timeout:             3 * time.Second,
+			Time:                20 * time.Second,
+			Timeout:             5 * time.Second,
 			PermitWithoutStream: true,
 		}),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("NewClient: %w", err))
 	}
 	httpSrv := server.NewHttpServer(ctx, conn, httpAddr)
 	go server.ServeHttp(httpSrv)
