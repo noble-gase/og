@@ -37,7 +37,7 @@ func serve() *cli.Command {
 
 func serving(ctx context.Context) {
 	// 信号监听
-	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
 	grpcAddr := ":" + viper.GetString("port.grpc")

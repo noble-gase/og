@@ -431,7 +431,7 @@ func case2camel(s string) string {
 	if count == 1 {
 		return export(s)
 	}
-	for i := 0; i < count; i++ {
+	for i := range count {
 		items[i] = export(items[i])
 	}
 	return strings.Join(items, "")
