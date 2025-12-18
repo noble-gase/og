@@ -33,46 +33,33 @@ func (m M) Split() (cols ColumnList, vals []any) {
 //	import . "github.com/go-jet/jet/v2/sqlite"
 //
 //	// 语句示例
-//	table.Demo.INSERT(table.Demo.Name).VALUES("hello").RETURNING(table.Demo.AllColumns)
+//	table.Demo.INSERT(table.Demo.Name).VALUES("hello")
 //	// or
-//	table.Demo.INSERT(table.Demo.Name).MODEL(model.Demo{Name: "hello"}).RETURNING(table.Demo.AllColumns)
+//	table.Demo.INSERT(table.Demo.Name).MODEL(model.Demo{Name: "hello"})
 //
-//	// 创建方法
-//	sqlite.Create[model.Demo](ctx, db.DB(), stmt)
-func Create[T any](ctx context.Context, db *sql.DB, stmt InsertStatement) (T, error) {
-	// SQL日志
-	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
-
-	var dest T
-	err := stmt.QueryContext(ctx, db, &dest)
-	return dest, err
-}
-
-// BatchCreate 批量创建记录
-//
-//	// 导入模块
-//	import . "github.com/go-jet/jet/v2/sqlite"
-//
-//	// 语句示例
+//	// 批量插入
 //	table.Demo.INSERT(table.Demo.Name).
 //		VALUES("hello").
-//		VALUES("world").
-//		RETURNING(table.Demo.AllColumns)
+//		VALUES("world")
 //	// or
 //	table.Demo.INSERT(table.Demo.Name).MODELS([]model.Demo{
 //		{Name: "hello"},
 //		{Name: "world"},
-//	}).RETURNING(table.Demo.AllColumns)
+//	})
 //
 //	// 创建方法
-//	sqlite.BatchCreate[model.Demo](ctx, db.DB(), stmt)
-func BatchCreate[T any](ctx context.Context, db *sql.DB, stmt InsertStatement) ([]T, error) {
+//	sqlite.Create(ctx, db.DB(), stmt)
+func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
-	var dest []T
-	err := stmt.QueryContext(ctx, db, &dest)
-	return dest, err
+	ret, err := stmt.ExecContext(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	id, _ := ret.LastInsertId()
+	return id, nil
 }
 
 // Update 更新记录
@@ -206,7 +193,7 @@ func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) Selec
 //	// 查询方法
 //	sqlite.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
 //		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
-//	}, page, size, table.Demo.AllColumns...)
+//	}, page, size, table.Demo.AllColumns, table.Demo.ID.DESC())
 func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ColumnList, orderBy ...OrderByClause) ([]T, int64, error) {
 	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 

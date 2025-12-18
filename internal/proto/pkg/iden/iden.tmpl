@@ -5,8 +5,9 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log/slog"
+
+	"{{.Module}}/pkg/log"
 
 	"github.com/noble-gase/ne/crypts"
 	"github.com/noble-gase/ne/helper"
@@ -30,25 +31,25 @@ func FromAuthToken(ctx context.Context, token string) Iden {
 
 	cipherText, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		slog.ErrorContext(ctx, "[AuthToken] base64.Decode failed", slog.String("error", err.Error()))
+		log.Error(ctx, err, slog.String("token", token))
 		return iden
 	}
 
 	key := []byte(viper.GetString("app.secret"))
 	plainText, err := crypts.DecryptCBC(key, key[:aes.BlockSize], cipherText)
 	if err != nil {
-		slog.ErrorContext(ctx, "[AuthToken] crypts.DecryptCBC failed", slog.String("error", err.Error()))
+		log.Error(ctx, err, slog.String("token", token))
 		return iden
 	}
 
 	if err = json.Unmarshal(plainText, &iden); err != nil {
-		slog.ErrorContext(ctx, "[AuthToken] json.Unmarshal failed", slog.String("error", err.Error()))
+		log.Error(ctx, err, slog.String("token", token), slog.String("data", string(plainText)))
 	}
 	return iden
 }
 
 // ToAuthToken 生成授权Token
-func ToAuthToken(id int64, token string) (string, error) {
+func ToAuthToken(ctx context.Context, id int64, token string) (string, error) {
 	iden := Iden{
 		Id:    id,
 		Token: token,
@@ -56,13 +57,13 @@ func ToAuthToken(id int64, token string) (string, error) {
 
 	b, err := json.Marshal(iden)
 	if err != nil {
-		return "", fmt.Errorf("json.Marshal: %w", err)
+		return "", helper.Error(ctx, err, slog.Int64("id", id), slog.String("token", token))
 	}
 
 	key := []byte(viper.GetString("app.secret"))
 	ct, err := crypts.EncryptCBC(key, key[:aes.BlockSize], b)
 	if err != nil {
-		return "", fmt.Errorf("crypts.EncryptCBC: %w", err)
+		return "", helper.Error(ctx, err, slog.Int64("id", id), slog.String("token", token))
 	}
 	return ct.String(), nil
 }

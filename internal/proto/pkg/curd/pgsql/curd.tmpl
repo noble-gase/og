@@ -206,7 +206,7 @@ func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) Selec
 //	// 查询方法
 //	pgsql.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
 //		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
-//	}, page, size, table.Demo.AllColumns...)
+//	}, page, size, table.Demo.AllColumns, table.Demo.ID.DESC())
 func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ColumnList, orderBy ...OrderByClause) ([]T, int64, error) {
 	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
