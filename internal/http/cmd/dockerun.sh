@@ -1,8 +1,8 @@
 #!/bin/bash
+
 docker rm -f {{.AppName}}
 docker rmi -f {{.AppName}}
-
-{{- if eq .DockerF "Dockerfile"}}
+{{ if eq .DockerF "Dockerfile"}}
 docker build -t {{.AppName}} .
 {{- else}}
 docker build -f {{.DockerF}} -t {{.AppName}} .
