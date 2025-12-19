@@ -1,4 +1,5 @@
-FROM golang:1.23 AS builder
+# build stage
+FROM golang:1.24 AS builder
 
 WORKDIR /project
 
@@ -7,11 +8,13 @@ COPY . .
 RUN go env -w GOPROXY="https://goproxy.cn,direct"
 RUN go mod download
 RUN go mod tidy
-{{ if eq .AppPkg "app" }}
+{{- if eq .AppPkg "app" }}
 RUN CGO_ENABLED=0 go build -o ./bin/main ./cmd
-{{ else }}
+{{- else }}
 RUN CGO_ENABLED=0 go build -o ./bin/main ./cmd/{{.AppName}}
-{{ end }}
+{{- end }}
+
+# runtime stage
 FROM scratch
 
 WORKDIR /bin
@@ -21,5 +24,4 @@ COPY --from=builder /project/bin/main .
 EXPOSE 8000
 
 ENTRYPOINT ["./main"]
-
 CMD ["serve", "--config", "/data/config.toml"]
