@@ -15,8 +15,8 @@ func Recovery(next http.Handler) http.Handler {
 		defer func() {
 			// panic 捕获
 			if err := recover(); err != nil {
-				slog.ErrorContext(r.Context(), "server panic recoverd", slog.Any("error", err), slog.String("stack", string(debug.Stack())))
-				result.Err(fmt.Errorf("server panic recoverd: %+v", err)).JSON(w, r)
+				slog.ErrorContext(r.Context(), "panic recoverd", slog.Any("error", err), slog.String("stack", string(debug.Stack())))
+				result.Err(fmt.Errorf("panic occurred: %+v", err)).JSON(w, r)
 			}
 		}()
 		next.ServeHTTP(w, r)

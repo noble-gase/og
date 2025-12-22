@@ -8,10 +8,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Recovery(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+func Recovery(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	defer func() {
-		if err := recover(); err != nil {
-			slog.ErrorContext(ctx, "server panic recovered", slog.Any("request", req), slog.Any("err", err), slog.String("stack", string(debug.Stack())))
+		if e := recover(); e != nil {
+			err = fmt.Errorf("panic occurred: %+v", e)
+			slog.ErrorContext(ctx, "panic recovered", slog.Any("request", req), slog.Any("err", e), slog.String("stack", string(debug.Stack())))
 			return
 		}
 	}()
