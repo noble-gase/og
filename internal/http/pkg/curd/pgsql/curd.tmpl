@@ -143,10 +143,10 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 
 	var dest T
 	if err := stmt.QueryContext(ctx, db, &dest); err != nil {
-		if !errors.Is(err, qrm.ErrNoRows) {
-			return nil, err
+		if errors.Is(err, qrm.ErrNoRows) {
+			return nil, nil
 		}
-		return nil, nil
+		return nil, err
 	}
 	return &dest, nil
 }
