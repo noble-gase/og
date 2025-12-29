@@ -24,8 +24,8 @@ func New(cfgName string) *sql.DB {
 	if len(opts) != 0 {
 		cfg.MaxOpenConns = cast.ToInt(opts["max_open_conns"])
 		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
-		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
 		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
+		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
 	}
 
 	db, err := sqls.NewDB(cfg)
