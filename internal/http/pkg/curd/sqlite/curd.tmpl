@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log/slog"
 
@@ -49,7 +48,7 @@ func (m M) Split() (cols ColumnList, vals []any) {
 //
 //	// 创建方法
 //	sqlite.Create(ctx, db.DB(), stmt)
-func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error) {
+func Create(ctx context.Context, db qrm.DB, stmt InsertStatement) (int64, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
@@ -74,7 +73,7 @@ func Create(ctx context.Context, db *sql.DB, stmt InsertStatement) (int64, error
 //
 //	// 更新方法
 //	sqlite.Update(ctx, db.DB(), stmt)
-func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error) {
+func Update(ctx context.Context, db qrm.DB, stmt UpdateStatement) (int64, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
@@ -97,7 +96,7 @@ func Update(ctx context.Context, db *sql.DB, stmt UpdateStatement) (int64, error
 //
 //	// 删除方法
 //	sqlite.Delete(ctx, db.DB(), stmt)
-func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) (int64, error) {
+func Delete(ctx context.Context, db qrm.DB, stmt DeleteStatement) (int64, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
@@ -122,7 +121,7 @@ func Delete(ctx context.Context, db *sql.DB, stmt DeleteStatement) (int64, error
 //
 //	// 查询方法
 //	sqlite.FindOne[model.Demo](ctx, db.DB(), stmt)
-func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, error) {
+func FindOne[T any](ctx context.Context, db qrm.DB, stmt SelectStatement) (*T, error) {
 	stmt = stmt.LIMIT(1)
 
 	// SQL日志
@@ -150,7 +149,7 @@ func FindOne[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) (*T, 
 //
 //	// 查询方法
 //	sqlite.FindAll[model.Demo](ctx, db.DB(), stmt)
-func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T, error) {
+func FindAll[T any](ctx context.Context, db qrm.DB, stmt SelectStatement) ([]T, error) {
 	// SQL日志
 	slog.InfoContext(ctx, sqls.Minify(stmt.DebugSql()))
 
@@ -170,7 +169,7 @@ func FindAll[T any](ctx context.Context, db *sql.DB, stmt SelectStatement) ([]T,
 //	sqlite.Count(ctx, db.DB(), func(count SelectStatement) SelectStatement {
 //		return count.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
 //	})
-func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) SelectStatement) (int64, error) {
+func Count(ctx context.Context, db qrm.DB, fn func(count SelectStatement) SelectStatement) (int64, error) {
 	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
 	// SQL日志
@@ -194,7 +193,7 @@ func Count(ctx context.Context, db *sql.DB, fn func(count SelectStatement) Selec
 //	sqlite.Paginate[model.Demo](ctx, db.DB(), func(query SelectStatement) SelectStatement {
 //		return query.FROM(table.Demo.Table).WHERE(table.Demo.Name.LIKE(String("%hello%")))
 //	}, page, size, table.Demo.AllColumns, table.Demo.ID.DESC())
-func Paginate[T any](ctx context.Context, db *sql.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ColumnList, orderBy ...OrderByClause) ([]T, int64, error) {
+func Paginate[T any](ctx context.Context, db qrm.DB, fn func(query SelectStatement) SelectStatement, page, size int, cols ColumnList, orderBy ...OrderByClause) ([]T, int64, error) {
 	stmt := fn(SELECT(COUNT(STAR).AS("count")))
 
 	// SQL日志
