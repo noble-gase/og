@@ -19,8 +19,8 @@ func Header(next http.Handler) http.Handler {
 			md = metadata.Pairs()
 		}
 
-		for k, v := range r.Header {
-			md.Set(k, v...)
+		for k, vals := range r.Header {
+			md.Set(k, vals...)
 		}
 
 		// traceId
