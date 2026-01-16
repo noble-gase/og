@@ -200,7 +200,7 @@ func genGetter(path string) {
 	// Generate file
 	if !stat.IsDir() {
 		if node, ok := nodeMap[path]; ok {
-			genFile(node, info, path)
+			genFile(path, node, info)
 		}
 		return
 	}
@@ -211,13 +211,13 @@ func genGetter(path string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			genFile(node, info, filename)
+			genFile(filename, node, info)
 		}()
 	}
 	wg.Wait()
 }
 
-func genFile(node *ast.File, info *types.Info, filename string) {
+func genFile(filename string, node *ast.File, info *types.Info) {
 	sourceFile := filepath.Clean(filename)
 
 	gen := GenBody{
