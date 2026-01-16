@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/noble-gase/og/internal"
@@ -117,7 +118,7 @@ func main() {
 		Use:     "gg",
 		Short:   "generate Get methods",
 		Long:    "generate Get methods for structs to avoid panic caused by nil pointer",
-		Version: "v0.1.0",
+		Version: "v0.1.1",
 		Example: internal.CmdExamples(
 			"👉 -- CLI --",
 			"gg --path .",
@@ -130,9 +131,15 @@ func main() {
 			"//go:generate gg --path xxx.go",
 		),
 		Run: func(cmd *cobra.Command, args []string) {
+			var wg sync.WaitGroup
 			for _, path := range paths {
-				genGetter(filepath.Clean(path))
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					genGetter(filepath.Clean(path))
+				}()
 			}
+			wg.Wait()
 		},
 	}
 	// 注册参数
@@ -199,9 +206,15 @@ func genGetter(path string) {
 	}
 
 	// Generate files
+	var wg sync.WaitGroup
 	for filename, node := range nodeMap {
-		genFile(node, info, filename)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			genFile(node, info, filename)
+		}()
 	}
+	wg.Wait()
 }
 
 func genFile(node *ast.File, info *types.Info, filename string) {
