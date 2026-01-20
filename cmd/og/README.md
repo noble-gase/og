@@ -3,7 +3,6 @@
 自动生成项目，支持 `HTTP` 和 `gRPC`，并同时支持创建「单应用」和「多应用」
 
 > - 项目结构采用[标准布局](https://github.com/golang-standards/project-layout)
-> - 数据库 `CURD` 操作默认使用 [Jet](https://github.com/go-jet/jet)
 > - 配合 `protoc-gen-og`，支持使用 `proto` 定义API
 
 ## 安装
@@ -262,6 +261,7 @@ og app foo bar --grpc # 创建两个gRPC应用 -- foo 和 bar
 │       ├── bar
 │       └── foo
 ├── pkg
+│   └── ...
 ├── foo.dockerfile
 ├── foo.dockerun.sh
 ├── bar.dockerfile
@@ -286,6 +286,7 @@ og ent
 │       ├── schema
 │       └── generate.go
 ├── pkg
+│   └── ...
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -308,6 +309,7 @@ og ent foo bar # 创建Ent实例 -- foo 和 bar
 │           ├── schema
 │           └── generate.go
 ├── pkg
+│   └── ...
 ├── go.mod
 ├── go.sum
 └── README.md
