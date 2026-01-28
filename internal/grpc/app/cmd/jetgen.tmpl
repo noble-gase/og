@@ -13,7 +13,7 @@ func jetgen() *cli.Command {
 	return &cli.Command{
 		Name:  "jetgen",
 		Usage: "Generate Tables and Models for Jet",
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: func(_ context.Context, _ *cli.Command) error {
 			return mysql.GenerateDB(db.DB(), "demo", "../internal/gen")
 		},
 	}

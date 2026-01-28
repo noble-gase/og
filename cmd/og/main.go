@@ -25,7 +25,7 @@ func main() {
 				}
 			}
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			fmt.Println("🐹 Welcome to use noble-gase[Go] scaffold")
 		},
 	}
@@ -67,13 +67,13 @@ func new() *cobra.Command {
 			"og new demo --app foo --app bar --grpc",
 			"og new demo --mod xxx.com/demo --app foo --app bar --grpc",
 		),
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("must specify a project name")
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			workDir := args[0]
 			if workDir == "." {
 				// 判断是否存在go.mod
@@ -148,13 +148,13 @@ func app() *cobra.Command {
 			"og app foo --grpc",
 			"og app foo bar --grpc",
 		),
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("must specify an app name")
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			fmt.Println("⌛️ Parse go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")
@@ -211,7 +211,7 @@ func ent() *cobra.Command {
 			"og ent foo",
 			"og ent foo bar",
 		),
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			fmt.Println("⌛️ Parse go.mod")
 			// 读取 go.mod 文件
 			data, err := os.ReadFile("go.mod")

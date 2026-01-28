@@ -26,7 +26,7 @@ func Init() {
 			config.Init(cmd.String("config"))
 			return ctx, nil
 		},
-		After: func(ctx context.Context, cmd *cli.Command) error {
+		After: func(_ context.Context, _ *cli.Command) error {
 			closes.Close()
 			return nil
 		},

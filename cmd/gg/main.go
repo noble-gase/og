@@ -130,7 +130,7 @@ func main() {
 			"//go:generate gg --path a/b/c",
 			"//go:generate gg --path xxx.go",
 		),
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			var wg sync.WaitGroup
 			for _, path := range paths {
 				wg.Add(1)

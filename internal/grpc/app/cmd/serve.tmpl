@@ -23,7 +23,7 @@ func serve() *cli.Command {
 	return &cli.Command{
 		Name:  "serve",
 		Usage: "Serve the application",
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		Action: func(ctx context.Context, _ *cli.Command) error {
 			// make sure we have a working tempdir in minimal containers, because:
 			// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
 			if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
