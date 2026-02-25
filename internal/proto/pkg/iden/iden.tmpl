@@ -9,7 +9,7 @@ import (
 
 	"{{.Module}}/pkg/log"
 
-	"github.com/noble-gase/ne/crypts"
+	"github.com/noble-gase/ne/cryptokit"
 	"github.com/noble-gase/ne/helper"
 	"github.com/spf13/viper"
 )
@@ -36,7 +36,7 @@ func FromAuthToken(ctx context.Context, token string) Iden {
 	}
 
 	key := []byte(viper.GetString("app.secret"))
-	plainText, err := crypts.DecryptCBC(key, key[:aes.BlockSize], cipherText)
+	plainText, err := cryptokit.DecryptCBC(key, key[:aes.BlockSize], cipherText)
 	if err != nil {
 		log.Error(ctx, err, slog.String("token", token))
 		return iden
@@ -61,7 +61,7 @@ func ToAuthToken(ctx context.Context, id int64, token string) (string, error) {
 	}
 
 	key := []byte(viper.GetString("app.secret"))
-	ct, err := crypts.EncryptCBC(key, key[:aes.BlockSize], b)
+	ct, err := cryptokit.EncryptCBC(key, key[:aes.BlockSize], b)
 	if err != nil {
 		return "", helper.Error(ctx, err, slog.Int64("id", id), slog.String("token", token))
 	}

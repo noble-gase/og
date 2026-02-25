@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/noble-gase/ne/closes"
-	"github.com/noble-gase/ne/sqls"
+	"github.com/noble-gase/ne/closekit"
+	"github.com/noble-gase/ne/sqlkit"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
@@ -15,7 +15,7 @@ import (
 var ErrDbNil = errors.New("db is nil (forgotten initialize?)")
 
 func New(cfgName string) *sql.DB {
-	cfg := &sqls.Config{
+	cfg := &sqlkit.Config{
 		Driver: viper.GetString(cfgName + ".driver"),
 		DSN:    viper.GetString(cfgName + ".dsn"),
 	}
@@ -28,12 +28,12 @@ func New(cfgName string) *sql.DB {
 		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
 	}
 
-	db, err := sqls.NewDB(cfg)
+	db, err := sqlkit.NewDB(cfg)
 	if err != nil {
 		panic(fmt.Errorf("DB(%s) init failed: %w", cfgName, err))
 	}
 
-	closes.Add(cfgName, closes.P90, func() error {
+	closekit.Add(cfgName, closekit.P90, func() error {
 		return db.Close()
 	})
 

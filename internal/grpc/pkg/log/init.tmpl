@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/noble-gase/ne/closes"
+	"github.com/noble-gase/ne/closekit"
 	slogmulti "github.com/samber/slog-multi"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -42,7 +42,7 @@ func Init() {
 		rotate.Compress = cast.ToBool(opts["compress"])
 	}
 
-	closes.Add("log", closes.P100, func() error {
+	closekit.Add("log", closekit.P100, func() error {
 		return rotate.Close()
 	})
 

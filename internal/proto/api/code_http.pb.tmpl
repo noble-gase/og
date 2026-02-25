@@ -7,38 +7,38 @@
 package {{.ApiName}}
 
 import (
-	codes "github.com/noble-gase/ne/codes"
+	codekit "github.com/noble-gase/ne/codekit"
 )
 
 var (
-	Code_Ok          = codes.New(int(Code_OK), "ok")
-	Code_ErrParams   = codes.New(int(Code_ERR_PARAMS), "参数错误")
-	Code_ErrAuth     = codes.New(int(Code_ERR_AUTH), "未授权，请先登录")
-	Code_ErrPerm     = codes.New(int(Code_ERR_PERM), "权限不足")
-	Code_ErrNotFound = codes.New(int(Code_ERR_NOT_FOUND), "数据不存在")
-	Code_ErrSystem   = codes.New(int(Code_ERR_SYSTEM), "内部服务器错误，请稍后重试")
+	Code_Ok          = codekit.New(int(Code_OK), "ok")
+	Code_ErrParams   = codekit.New(int(Code_ERR_PARAMS), "参数错误")
+	Code_ErrAuth     = codekit.New(int(Code_ERR_AUTH), "未授权，请先登录")
+	Code_ErrPerm     = codekit.New(int(Code_ERR_PERM), "权限不足")
+	Code_ErrNotFound = codekit.New(int(Code_ERR_NOT_FOUND), "数据不存在")
+	Code_ErrSystem   = codekit.New(int(Code_ERR_SYSTEM), "内部服务器错误，请稍后重试")
 )
 
 func Is_Code_Ok(err error) bool {
-	return codes.Is(err, Code_Ok)
+	return codekit.Is(err, Code_Ok)
 }
 
 func Is_Code_ErrParams(err error) bool {
-	return codes.Is(err, Code_ErrParams)
+	return codekit.Is(err, Code_ErrParams)
 }
 
 func Is_Code_ErrAuth(err error) bool {
-	return codes.Is(err, Code_ErrAuth)
+	return codekit.Is(err, Code_ErrAuth)
 }
 
 func Is_Code_ErrPerm(err error) bool {
-	return codes.Is(err, Code_ErrPerm)
+	return codekit.Is(err, Code_ErrPerm)
 }
 
 func Is_Code_ErrNotFound(err error) bool {
-	return codes.Is(err, Code_ErrNotFound)
+	return codekit.Is(err, Code_ErrNotFound)
 }
 
 func Is_Code_ErrSystem(err error) bool {
-	return codes.Is(err, Code_ErrSystem)
+	return codekit.Is(err, Code_ErrSystem)
 }

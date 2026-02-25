@@ -1,11 +1,11 @@
 package code
 
-import "github.com/noble-gase/ne/codes"
+import "github.com/noble-gase/ne/codekit"
 
 var (
-	ErrParams   = codes.New(10000, "参数错误")
-	ErrAuth     = codes.New(20000, "未授权，请先登录")
-	ErrPerm     = codes.New(30000, "权限不足")
-	ErrNotFound = codes.New(40000, "数据不存在")
-	ErrSystem   = codes.New(50000, "内部服务器错误，请稍后重试")
+	ErrParams   = codekit.New(10000, "参数错误")
+	ErrAuth     = codekit.New(20000, "未授权，请先登录")
+	ErrPerm     = codekit.New(30000, "权限不足")
+	ErrNotFound = codekit.New(40000, "数据不存在")
+	ErrSystem   = codekit.New(50000, "内部服务器错误，请稍后重试")
 )

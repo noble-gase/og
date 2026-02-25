@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/noble-gase/ne/closes"
+	"github.com/noble-gase/ne/closekit"
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/go-redis/v9/maintnotifications"
 	"github.com/spf13/cast"
@@ -51,7 +51,7 @@ func New(cfgName string) redis.UniversalClient {
 		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
 	}
 
-	closes.Add(cfgName, closes.P80, func() error {
+	closekit.Add(cfgName, closekit.P80, func() error {
 		return client.Close()
 	})
 

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "v0.2.1"
+	version = "v0.3.0"
 	suffix  = "_http.pb.go"
 )
 
@@ -47,15 +47,15 @@ func main() {
 }
 
 const (
-	ctxPkg    = protogen.GoImportPath("context")
-	errorPkg  = protogen.GoImportPath("errors")
-	httpPkg   = protogen.GoImportPath("net/http")
-	chiPkg    = protogen.GoImportPath("github.com/go-chi/chi/v5")
-	helperPkg = protogen.GoImportPath("github.com/noble-gase/ne/helper")
-	resultPkg = protogen.GoImportPath("github.com/noble-gase/ne/result")
-	restyPkg  = protogen.GoImportPath("github.com/go-resty/resty/v2")
-	protosPkg = protogen.GoImportPath("github.com/noble-gase/ne/protos")
-	codesPkg  = protogen.GoImportPath("github.com/noble-gase/ne/codes")
+	ctxPkg      = protogen.GoImportPath("context")
+	errorPkg    = protogen.GoImportPath("errors")
+	httpPkg     = protogen.GoImportPath("net/http")
+	chiPkg      = protogen.GoImportPath("github.com/go-chi/chi/v5")
+	helperPkg   = protogen.GoImportPath("github.com/noble-gase/ne/helper")
+	resultPkg   = protogen.GoImportPath("github.com/noble-gase/ne/result")
+	restyPkg    = protogen.GoImportPath("github.com/go-resty/resty/v2")
+	codekitPkg  = protogen.GoImportPath("github.com/noble-gase/ne/codekit")
+	protokitPkg = protogen.GoImportPath("github.com/noble-gase/ne/protokit")
 )
 
 func protocVersion(p *protogen.Plugin) string {
@@ -205,7 +205,7 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
 		gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req); err != nil {")
-		gf.P(resultPkg.Ident("Err"), "(", codesPkg.Ident("FromError"), "(err)).JSON(w, r)")
+		gf.P(resultPkg.Ident("Err"), "(", codekitPkg.Ident("FromError"), "(err)).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")
 		gf.P("// call service")
@@ -220,13 +220,13 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 	}
 }
 
-// Method(ctx context.Context, in *MethodReq, opts ...protos.RequestOption) (*MethodResp, error)
+// Method(ctx context.Context, in *MethodReq, opts ...protokit.RequestOption) (*MethodResp, error)
 func clientSignature(gf *protogen.GeneratedFile, method *protogen.Method) string {
 	var reqArgs []string
 	// params
 	reqArgs = append(reqArgs, "ctx "+gf.QualifiedGoIdent(ctxPkg.Ident("Context")))
 	reqArgs = append(reqArgs, "in *"+gf.QualifiedGoIdent(method.Input.GoIdent))
-	reqArgs = append(reqArgs, "opts ..."+gf.QualifiedGoIdent(protosPkg.Ident("RequestOption")))
+	reqArgs = append(reqArgs, "opts ..."+gf.QualifiedGoIdent(protokitPkg.Ident("RequestOption")))
 	// return
 	resp := "(*" + gf.QualifiedGoIdent(method.Output.GoIdent) + ", error)"
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + resp
@@ -259,7 +259,7 @@ func genClientNew(gf *protogen.GeneratedFile, _ *protogen.Service, serviceType s
 	gf.P("}")
 	gf.P()
 	gf.P("// New", serviceType, " returns a client for ", serviceType, ". Typically requires WithBaseURL")
-	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", opts ...", protosPkg.Ident("ClientOption"), ") ", serviceType, " {")
+	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", opts ...", protokitPkg.Ident("ClientOption"), ") ", serviceType, " {")
 	gf.P("c := ", restyPkg.Ident("NewWithClient"), "(hc)")
 	gf.P("for _, f := range opts {")
 	gf.P("f(c)")
@@ -283,9 +283,9 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 
 		gf.P()
 		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
-		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protosPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
+		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protokitPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
 		if isGetMethod {
-			gf.P("req := c.client.R().SetContext(ctx).SetQueryParamsFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
+			gf.P("req := c.client.R().SetContext(ctx).SetQueryParamsFromValues(", protokitPkg.Ident("MessageToValues"), "(in))")
 		} else {
 			gf.P("req := c.client.R().SetContext(ctx)")
 		}
@@ -296,18 +296,18 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 			gf.P("// set request body")
 			gf.P("switch ", helperPkg.Ident("ContentType"), "(req.Header) {")
 			gf.P("case ", helperPkg.Ident("ContentForm"), ",", helperPkg.Ident("ContentMultipartForm"), ":")
-			gf.P("req.SetFormDataFromValues(", protosPkg.Ident("MessageToValues"), "(in))")
+			gf.P("req.SetFormDataFromValues(", protokitPkg.Ident("MessageToValues"), "(in))")
 			gf.P("default:")
 			gf.P("req.SetHeader(", helperPkg.Ident("HeaderContentType"), ", ", helperPkg.Ident("ContentJSON"), ").SetBody(in)")
 			gf.P("}")
 		}
 		gf.P("// send request")
-		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
+		gf.P("ret := new(", protokitPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
 		gf.P("if _, err := req.SetResult(ret).", method, `("`, path, `"); err != nil {`)
 		gf.P("return nil, err")
 		gf.P("}")
 		gf.P("if ret.Code != 0 {")
-		gf.P("return nil, ", codesPkg.Ident("New"), "(ret.Code, ret.Msg)")
+		gf.P("return nil, ", codekitPkg.Ident("New"), "(ret.Code, ret.Msg)")
 		gf.P("}")
 		gf.P("return ret.Data, nil")
 		gf.P("}")
@@ -373,7 +373,7 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 				}
 			}
 			name := case2camel(string(v.Desc.Name()))
-			gf.P(e.Desc.Name(), "_", name, " = ", codesPkg.Ident("New"), "(int(", e.Desc.Name(), "_", v.Desc.Name(), `), "`, msg, `")`)
+			gf.P(e.Desc.Name(), "_", name, " = ", codekitPkg.Ident("New"), "(int(", e.Desc.Name(), "_", v.Desc.Name(), `), "`, msg, `")`)
 		}
 		gf.P()
 	}
@@ -383,7 +383,7 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 		for _, v := range e.Values {
 			name := case2camel(string(v.Desc.Name()))
 			gf.P("func Is_", e.Desc.Name(), "_", name, "(err error) bool {")
-			gf.P("return ", codesPkg.Ident("Is"), "(err, ", e.Desc.Name(), "_", name, ")")
+			gf.P("return ", codekitPkg.Ident("Is"), "(err, ", e.Desc.Name(), "_", name, ")")
 			gf.P("}")
 			gf.P()
 		}

@@ -11,9 +11,9 @@ import (
 	errors "errors"
 	v5 "github.com/go-chi/chi/v5"
 	v2 "github.com/go-resty/resty/v2"
-	codes "github.com/noble-gase/ne/codes"
+	codekit "github.com/noble-gase/ne/codekit"
 	helper "github.com/noble-gase/ne/helper"
-	protos "github.com/noble-gase/ne/protos"
+	protokit "github.com/noble-gase/ne/protokit"
 	result "github.com/noble-gase/ne/result"
 	http "net/http"
 )
@@ -48,7 +48,7 @@ func _GreeterService_SayHello(svc GreeterServiceHttpServer) http.HandlerFunc {
 		// parse request
 		req := new(HelloRequest)
 		if err := helper.BindProto(r, req); err != nil {
-			result.Err(codes.FromError(err)).JSON(w, r)
+			result.Err(codekit.FromError(err)).JSON(w, r)
 			return
 		}
 		// call service
@@ -66,7 +66,7 @@ func _GreeterService_SayHello(svc GreeterServiceHttpServer) http.HandlerFunc {
 // GreeterServiceHttpClient is the client API definition for GreeterService
 type GreeterServiceHttpClient interface {
 	// Sends a greeting
-	SayHello(ctx context.Context, in *HelloRequest, opts ...protos.RequestOption) (*HelloResponse, error)
+	SayHello(ctx context.Context, in *HelloRequest, opts ...protokit.RequestOption) (*HelloResponse, error)
 }
 
 type greeterServiceHttpClient struct {
@@ -74,7 +74,7 @@ type greeterServiceHttpClient struct {
 }
 
 // NewGreeterServiceHttpClient returns a client for GreeterServiceHttpClient. Typically requires WithBaseURL
-func NewGreeterServiceHttpClient(hc *http.Client, opts ...protos.ClientOption) GreeterServiceHttpClient {
+func NewGreeterServiceHttpClient(hc *http.Client, opts ...protokit.ClientOption) GreeterServiceHttpClient {
 	c := v2.NewWithClient(hc)
 	for _, f := range opts {
 		f(c)
@@ -83,7 +83,7 @@ func NewGreeterServiceHttpClient(hc *http.Client, opts ...protos.ClientOption) G
 }
 
 // Sends a greeting
-func (c *greeterServiceHttpClient) SayHello(ctx context.Context, in *HelloRequest, opts ...protos.RequestOption) (*HelloResponse, error) {
+func (c *greeterServiceHttpClient) SayHello(ctx context.Context, in *HelloRequest, opts ...protokit.RequestOption) (*HelloResponse, error) {
 	req := c.client.R().SetContext(ctx)
 	for _, f := range opts {
 		f(req)
@@ -91,17 +91,17 @@ func (c *greeterServiceHttpClient) SayHello(ctx context.Context, in *HelloReques
 	// set request body
 	switch helper.ContentType(req.Header) {
 	case helper.ContentForm, helper.ContentMultipartForm:
-		req.SetFormDataFromValues(protos.MessageToValues(in))
+		req.SetFormDataFromValues(protokit.MessageToValues(in))
 	default:
 		req.SetHeader(helper.HeaderContentType, helper.ContentJSON).SetBody(in)
 	}
 	// send request
-	ret := new(protos.ApiResult[*HelloResponse])
+	ret := new(protokit.ApiResult[*HelloResponse])
 	if _, err := req.SetResult(ret).Post("/v1/greeter"); err != nil {
 		return nil, err
 	}
 	if ret.Code != 0 {
-		return nil, codes.New(ret.Code, ret.Msg)
+		return nil, codekit.New(ret.Code, ret.Msg)
 	}
 	return ret.Data, nil
 }

@@ -3,12 +3,12 @@ package status
 import (
 	"context"
 
-	"github.com/noble-gase/ne/codes"
-	gcodes "google.golang.org/grpc/codes"
+	"github.com/noble-gase/ne/codekit"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func Error(ctx context.Context, err error) error {
-	code := codes.FromError(err)
-	return status.Error(gcodes.Code(code.Value()), code.Message())
+	code := codekit.FromError(err)
+	return status.Error(codes.Code(code.Value()), code.Message())
 }

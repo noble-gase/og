@@ -10,7 +10,7 @@ import (
 	"{{.Module}}/internal/{{.AppPkg}}/config"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/noble-gase/ne/closes"
+	"github.com/noble-gase/ne/closekit"
 )
 
 func TestMain(m *testing.M) {
@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	// 执行测试
 	code := m.Run()
 	// 关闭资源
-	closes.Close()
+	closekit.Close()
 
 	os.Exit(code)
 }
