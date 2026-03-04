@@ -11,7 +11,7 @@ import (
 const HealthCheckMethod = "/grpc.health.v1.Health/Check"
 
 func Log(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	now := time.Now()
+	start := time.Now()
 
 	defer func() {
 		if info.FullMethod == HealthCheckMethod {
@@ -22,7 +22,7 @@ func Log(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.
 			slog.ErrorContext(ctx, info.FullMethod,
 				slog.Any("request", req),
 				slog.String("error", err.Error()),
-				slog.String("duration", time.Since(now).String()),
+				slog.String("duration", time.Since(start).String()),
 			)
 			return
 		}
@@ -30,7 +30,7 @@ func Log(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.
 		slog.InfoContext(ctx, info.FullMethod,
 			slog.Any("request", req),
 			slog.Any("response", resp),
-			slog.String("duration", time.Since(now).String()),
+			slog.String("duration", time.Since(start).String()),
 		)
 	}()
 

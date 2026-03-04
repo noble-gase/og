@@ -17,5 +17,6 @@ func Recovery(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grp
 			return
 		}
 	}()
-	return handler(ctx, req)
+	resp, err = handler(ctx, req)
+	return
 }
