@@ -8,7 +8,7 @@
 
 ## og
 
-自动生成项目，支持 `HTTP` 和 `gRPC` 以及 `MCP`，并同时支持创建「单应用」和「多应用」
+支持创建 `HTTP` 和 `gRPC` 以及 `MCP` 项目，并同时支持创建「单应用」和「多应用」
 
 ```shell
 go install github.com/noble-gase/og/cmd/og@latest
