@@ -14,14 +14,14 @@ var (
 	callCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "tool_call_count",
 		Help: "mcp tool call count",
-	}, []string{"method", "status"})
+	}, []string{"tool", "status"})
 
 	// 请求时长
 	callDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "tool_call_duration",
 		Help:    "mcp tool call duration (ms)",
 		Buckets: []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000},
-	}, []string{"method", "status"})
+	}, []string{"tool", "status"})
 )
 
 func init() {
@@ -43,9 +43,9 @@ func Metrics(next server.ToolHandlerFunc) server.ToolHandlerFunc {
 			}
 
 			// 请求次数
-			callCnt.WithLabelValues(req.Method, status).Inc()
+			callCnt.WithLabelValues(req.Params.Name, status).Inc()
 			// 请求时长
-			callDur.WithLabelValues(req.Method, status).Observe(float64(duration.Milliseconds()))
+			callDur.WithLabelValues(req.Params.Name, status).Observe(float64(duration.Milliseconds()))
 		}()
 
 		result, err = next(ctx, req)
