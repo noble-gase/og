@@ -1,0 +1,37 @@
+package middleware
+
+import (
+	"context"
+	"log/slog"
+	"time"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+)
+
+// Log 日志中间件
+func Log(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+	return func(ctx context.Context, req mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
+		start := time.Now()
+
+		defer func() {
+			if err != nil {
+				slog.ErrorContext(ctx, "mcp tool call",
+					slog.Any("request", req),
+					slog.String("error", err.Error()),
+					slog.String("duration", time.Since(start).String()),
+				)
+				return
+			}
+
+			slog.InfoContext(ctx, "mcp tool call",
+				slog.Any("request", req),
+				slog.Any("result", result),
+				slog.String("duration", time.Since(start).String()),
+			)
+		}()
+
+		result, err = next(ctx, req)
+		return
+	}
+}

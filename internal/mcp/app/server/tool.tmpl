@@ -1,0 +1,12 @@
+package server
+
+import (
+	"{{.Module}}/internal/{{.AppPkg}}/tools"
+
+	"github.com/mark3labs/mcp-go/server"
+)
+
+func AddTools(s *server.MCPServer) {
+	// // 获取当前服务器时间
+	s.AddTool(tools.SystemNowTool(), tools.SystemNowHandler)
+}

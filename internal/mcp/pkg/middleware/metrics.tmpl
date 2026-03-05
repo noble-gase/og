@@ -1,0 +1,54 @@
+package middleware
+
+import (
+	"context"
+	"time"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	// 请求次数
+	callCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "tool_call_count",
+		Help: "mcp tool call count",
+	}, []string{"method", "status"})
+
+	// 请求时长
+	callDur = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "tool_call_duration",
+		Help:    "mcp tool call duration (ms)",
+		Buckets: []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000},
+	}, []string{"method", "status"})
+)
+
+func init() {
+	prometheus.MustRegister(callCnt)
+	prometheus.MustRegister(callDur)
+}
+
+// Metrics 监控指标
+func Metrics(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+	return func(ctx context.Context, req mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
+		now := time.Now().Local()
+
+		defer func() {
+			duration := time.Since(now)
+
+			status := "OK"
+			if err != nil {
+				status = "ERR"
+			}
+
+			// 请求次数
+			callCnt.WithLabelValues(req.Method, status).Inc()
+			// 请求时长
+			callDur.WithLabelValues(req.Method, status).Observe(float64(duration.Milliseconds()))
+		}()
+
+		result, err = next(ctx, req)
+		return
+	}
+}

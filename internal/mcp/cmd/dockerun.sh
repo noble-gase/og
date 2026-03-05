@@ -9,4 +9,4 @@ docker build -f {{.DockerF}} -t {{.AppName}} .
 {{- end}}
 docker image prune -f
 
-docker run -d --name={{.AppName}} --restart=always --privileged -p 10085:8000 -p 10086:50051 -v /data/{{.AppName}}:/data {{.AppName}}
+docker run -d --name={{.AppName}} --restart=always --privileged -p 10085:8000 -p 10086:9000 -v /data/{{.AppName}}:/data {{.AppName}}

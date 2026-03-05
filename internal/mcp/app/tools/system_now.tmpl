@@ -1,0 +1,34 @@
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"time"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/noble-gase/ne/helper"
+)
+
+func SystemNowTool() mcp.Tool {
+	description := `获取当前服务器时间（时区：Asia/Shanghai），在涉及时间计算时（如'最近N分钟/小时/天/周/月/年'）必须先调用此工具获取当前时间。`
+
+	return mcp.NewTool("system_now",
+		mcp.WithDescription(description),
+	)
+}
+
+func SystemNowHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	now := time.Now()
+
+	resp := helper.X{
+		"timestamp": now.Unix(),
+		"timezone":  "Asia/Shanghai",
+		"datetime":  now.Local().Format(time.DateTime),
+	}
+
+	b, err := json.Marshal(resp)
+	if err != nil {
+		return nil, helper.Error(ctx, err)
+	}
+	return mcp.NewToolResultText(string(b)), nil
+}

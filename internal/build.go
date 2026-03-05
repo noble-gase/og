@@ -16,6 +16,7 @@ import (
 	"github.com/noble-gase/og/internal/ent"
 	"github.com/noble-gase/og/internal/grpc"
 	"github.com/noble-gase/og/internal/http"
+	"github.com/noble-gase/og/internal/mcp"
 	"github.com/noble-gase/og/internal/proto"
 )
 
@@ -138,6 +139,45 @@ func InitGrpcApp(root, mod, name string) {
 	genApi(root, params, grpc.FS, name)
 	genApp(root, params, grpc.FS, name)
 	genCmd(root, params, grpc.FS, name)
+}
+
+func InitMcpProject(root, mod string, apps ...string) {
+	params := &Params{
+		Module:  mod,
+		AppPkg:  "app",
+		AppName: root,
+		DockerF: "Dockerfile",
+	}
+
+	genRoot(root, params, mcp.FS)
+	genPkg(root, params, mcp.FS)
+
+	if len(apps) == 0 {
+		genApp(root, params, mcp.FS)
+		genCmd(root, params, mcp.FS)
+		return
+	}
+
+	for _, name := range apps {
+		params.AppPkg = "app/" + name
+		params.AppName = name
+		params.DockerF = "Dockerfile." + name
+
+		genApp(root, params, mcp.FS, name)
+		genCmd(root, params, mcp.FS, name)
+	}
+}
+
+func InitMcpApp(root, mod, name string) {
+	params := &Params{
+		Module:  mod,
+		AppPkg:  "app/" + name,
+		AppName: name,
+		DockerF: "Dockerfile." + name,
+	}
+
+	genApp(root, params, mcp.FS, name)
+	genCmd(root, params, mcp.FS, name)
 }
 
 func InitEnt(root, mod string, name ...string) {

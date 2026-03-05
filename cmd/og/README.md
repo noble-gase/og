@@ -237,6 +237,70 @@ og new demo --mod xxx.com/demo --app foo --app bar --grpc # 指定module-path
 └── README.md
 ```
 
+### MCP
+
+##### 单应用
+
+```shell
+og new . --mcp # 当前目录初始化
+og new demo --mcp # 创建demo项目
+og new demo --mod xxx.com/demo --mcp # 指定module-path
+.
+├── cmd
+│   ├── config.toml
+│   └── main.go
+├── internal
+│   └── app
+│       ├── cmd
+│       ├── config
+│       ├── server
+│       └── tools
+├── pkg
+│   └── ...
+├── Dockerfile
+├── dockerun.sh
+├── go.mod
+├── go.sum
+└── README.md
+```
+
+##### 多应用
+
+```shell
+og new . --app foo --app bar --mcp # 当前目录初始化
+og new demo --app foo --app bar --mcp # 创建demo项目
+og new demo --mod xxx.com/demo --app foo --app bar --mcp # 指定module-path
+.
+├── cmd
+│   ├── bar
+│   │   ├── config.toml
+│   │   └── main.go
+│   └── foo
+│       ├── config.toml
+│       └── main.go
+├── internal
+│   └── app
+│       ├── bar
+│       │   ├── cmd
+│       │   ├── config
+│       │   ├── server
+│       │   └── tools
+│       └── foo
+│           ├── cmd
+│           ├── config
+│           ├── server
+│           └── tools
+├── pkg
+│   └── ...
+├── foo.dockerfile
+├── foo.dockerun.sh
+├── bar.dockerfile
+├── bar.dockerun.sh
+├── go.mod
+├── go.sum
+└── README.md
+```
+
 ## 创建应用
 
 > 多应用项目适用，需在项目根目录执行（即：`go.mod` 所在目录）
@@ -245,6 +309,7 @@ og new demo --mod xxx.com/demo --app foo --app bar --grpc # 指定module-path
 og app foo bar # 创建两个HTTP应用 -- foo 和 bar
 og app foo bar --proto # 使用proto定义API -- foo 和 bar
 og app foo bar --grpc # 创建两个gRPC应用 -- foo 和 bar
+og app foo bar --mcp # 创建两个MCP应用 -- foo 和 bar
 .
 ├── api
 │   ├── bar

@@ -1,0 +1,65 @@
+package cmd
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.Module}}/internal/{{.AppPkg}}/server"
+
+	"github.com/spf13/viper"
+	"github.com/urfave/cli/v3"
+)
+
+func serve() *cli.Command {
+	return &cli.Command{
+		Name:  "serve",
+		Usage: "Serve the application",
+		Action: func(ctx context.Context, _ *cli.Command) error {
+			// make sure we have a working tempdir in minimal containers, because:
+			// os.TempDir(): The directory is neither guaranteed to exist nor have accessible permissions.
+			if err := os.MkdirAll(os.TempDir(), 0o775); err != nil {
+				slog.ErrorContext(ctx, "os.MkdirAll(os.TempDir()) failed", slog.Any("error", err))
+			}
+			serving(ctx)
+			return nil
+		},
+	}
+}
+
+func serving(ctx context.Context) {
+	// 信号监听
+	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	defer stop()
+
+	baseURL := viper.GetString("app.baseURL")
+
+	mcpAddr := ":" + viper.GetString("port.mcp")
+	httpAddr := ":" + viper.GetString("port.http")
+
+	// 启动 SSE 服务
+	sseSrv := server.NewSSEServer(baseURL)
+	go server.ServeSSE(sseSrv, mcpAddr)
+
+	// 启动 HTTP 服务
+	httpSrv := server.NewHTTPServer(httpAddr)
+	go server.ServeHttp(httpSrv)
+
+	// 阻塞直到接收到信号
+	<-sigCtx.Done()
+	fmt.Println("⌛️ 收到终止信号，正在关闭服务...")
+
+	// 关闭服务
+	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	if err := sseSrv.Shutdown(shutCtx); err != nil {
+		slog.ErrorContext(ctx, "sse server shutdown failed", slog.String("error", err.Error()))
+	}
+	if err := httpSrv.Shutdown(shutCtx); err != nil {
+		slog.ErrorContext(ctx, "http server shutdown failed", slog.String("error", err.Error()))
+	}
+}

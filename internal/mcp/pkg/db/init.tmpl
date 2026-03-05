@@ -1,0 +1,16 @@
+package db
+
+import "database/sql"
+
+var db *sql.DB
+
+func Init() {
+	db = New("db")
+}
+
+func DB() *sql.DB {
+	if db == nil {
+		panic(ErrDbNil)
+	}
+	return db
+}

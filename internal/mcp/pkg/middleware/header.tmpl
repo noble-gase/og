@@ -1,0 +1,38 @@
+package middleware
+
+import (
+	"context"
+	"strings"
+
+	"github.com/google/uuid"
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/noble-gase/ne/helper"
+	"google.golang.org/grpc/metadata"
+)
+
+// Header is a middleware that injects headers into the context of each tool call.
+func Header(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+	return func(ctx context.Context, req mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			md = metadata.Pairs()
+		}
+
+		for k, vals := range req.Header {
+			md.Set(k, vals...)
+		}
+
+		// traceId
+		var traceId string
+		if vals := md.Get(helper.XTraceId); len(vals) != 0 {
+			traceId = vals[0]
+		}
+		if len(traceId) == 0 {
+			traceId = strings.ReplaceAll(uuid.New().String(), "-", "")
+			md.Set(helper.XTraceId, traceId)
+		}
+
+		return next(metadata.NewIncomingContext(ctx, md), req)
+	}
+}

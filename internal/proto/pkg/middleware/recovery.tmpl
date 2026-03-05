@@ -13,9 +13,8 @@ import (
 func Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			// panic 捕获
 			if err := recover(); err != nil {
-				slog.ErrorContext(r.Context(), "panic recoverd", slog.Any("error", err), slog.String("stack", string(debug.Stack())))
+				slog.ErrorContext(r.Context(), "panic occurred", slog.Any("error", err), slog.String("stack", string(debug.Stack())))
 				result.Err(fmt.Errorf("panic occurred: %+v", err)).JSON(w, r)
 			}
 		}()

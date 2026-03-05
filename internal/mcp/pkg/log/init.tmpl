@@ -1,0 +1,57 @@
+package log
+
+import (
+	"log/slog"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/noble-gase/ne/closekit"
+	slogmulti "github.com/samber/slog-multi"
+	"github.com/spf13/cast"
+	"github.com/spf13/viper"
+	"gopkg.in/natefinch/lumberjack.v2"
+)
+
+// Init 初始化日志
+func Init() {
+	ho := &slog.HandlerOptions{
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey {
+				return slog.String("time", attr.Value.Time().In(time.Local).Format(time.DateTime))
+			}
+			return attr
+		},
+	}
+
+	logfile := viper.GetString("log.path")
+	if len(logfile) == 0 {
+		slog.SetDefault(slog.New(NewContextHandler(os.Stderr, ho)))
+		return
+	}
+
+	rotate := &lumberjack.Logger{
+		Filename: filepath.Clean(logfile),
+	}
+
+	opts := viper.GetStringMap("log.options")
+	if len(opts) != 0 {
+		rotate.MaxSize = cast.ToInt(opts["max_size"])
+		rotate.MaxAge = cast.ToInt(opts["max_age"])
+		rotate.MaxBackups = cast.ToInt(opts["max_backups"])
+		rotate.Compress = cast.ToBool(opts["compress"])
+	}
+
+	closekit.Add("log", closekit.P100, func() error {
+		return rotate.Close()
+	})
+
+	if cast.ToBool(opts["stdout"]) {
+		slog.SetDefault(slog.New(slogmulti.Fanout(
+			NewContextHandler(rotate, ho),
+			NewContextHandler(os.Stderr, ho),
+		)))
+		return
+	}
+	slog.SetDefault(slog.New(NewContextHandler(rotate, ho)))
+}

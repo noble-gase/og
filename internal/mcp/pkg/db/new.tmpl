@@ -1,0 +1,41 @@
+package db
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/noble-gase/ne/closekit"
+	"github.com/noble-gase/ne/sqlkit"
+	"github.com/spf13/cast"
+	"github.com/spf13/viper"
+)
+
+var ErrDbNil = errors.New("db is nil (forgotten initialize?)")
+
+func New(cfgName string) *sql.DB {
+	cfg := &sqlkit.Config{
+		Driver: viper.GetString(cfgName + ".driver"),
+		DSN:    viper.GetString(cfgName + ".dsn"),
+	}
+
+	opts := viper.GetStringMap(cfgName + ".options")
+	if len(opts) != 0 {
+		cfg.MaxOpenConns = cast.ToInt(opts["max_open_conns"])
+		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
+		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
+		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
+	}
+
+	db, err := sqlkit.NewDB(cfg)
+	if err != nil {
+		panic(fmt.Errorf("DB(%s) init failed: %w", cfgName, err))
+	}
+
+	closekit.Add(cfgName, closekit.P90, func() error {
+		return db.Close()
+	})
+
+	return db
+}

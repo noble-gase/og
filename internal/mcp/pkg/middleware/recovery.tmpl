@@ -1,0 +1,25 @@
+package middleware
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"runtime/debug"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+)
+
+// Recovery panic recover middleware
+func Recovery(next server.ToolHandlerFunc) server.ToolHandlerFunc {
+	return func(ctx context.Context, req mcp.CallToolRequest) (result *mcp.CallToolResult, err error) {
+		defer func() {
+			if e := recover(); e != nil {
+				err = fmt.Errorf("panic occurred: %+v", e)
+				slog.ErrorContext(ctx, "panic occurred", slog.Any("error", e), slog.String("stack", string(debug.Stack())))
+			}
+		}()
+		result, err = next(ctx, req)
+		return
+	}
+}

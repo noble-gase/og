@@ -22,7 +22,7 @@ WORKDIR /bin
 COPY --from=builder /project/bin/main .
 
 EXPOSE 8000
-EXPOSE 50051
+EXPOSE 9000
 
 ENTRYPOINT ["./main"]
 CMD ["serve", "--config", "/data/config.toml"]
