@@ -1,0 +1,26 @@
+package server
+
+import (
+	"fmt"
+
+	"{{.Module}}/pkg/agent"
+	"{{.Module}}/pkg/channel/dingtalk"
+)
+
+func NewDingtalkStream() *dingtalk.Chatbot {
+	session, err := agent.NewSession("Demo-Agent", "session")
+	if err != nil {
+		panic(fmt.Errorf("Session: %w", err))
+	}
+
+	chat, err := agent.NewChat(session)
+	if err != nil {
+		panic(fmt.Errorf("Agent Chat: %w", err))
+	}
+
+	chatbot, err := dingtalk.NewChatbot(chat)
+	if err != nil {
+		panic(fmt.Errorf("Chatbot: %w", err))
+	}
+	return chatbot
+}

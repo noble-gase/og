@@ -1,0 +1,33 @@
+package server
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/spf13/viper"
+)
+
+func NewHttpServer() *http.Server {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("welcome to demo agent server"))
+	})
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	return &http.Server{
+		Addr:    viper.GetString("app.addr"),
+		Handler: mux,
+	}
+}
+
+func ServeHttp(srv *http.Server) {
+	fmt.Println("Serving HTTP on", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		panic(fmt.Errorf("ServeHttp: %w", err))
+	}
+}

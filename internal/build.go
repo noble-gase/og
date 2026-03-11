@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/noble-gase/og/internal/agent"
 	"github.com/noble-gase/og/internal/ent"
 	"github.com/noble-gase/og/internal/grpc"
 	"github.com/noble-gase/og/internal/http"
@@ -178,6 +179,45 @@ func InitMcpApp(root, mod, name string) {
 
 	genApp(root, params, mcp.FS, name)
 	genCmd(root, params, mcp.FS, name)
+}
+
+func InitAgentProject(root, mod string, apps ...string) {
+	params := &Params{
+		Module:  mod,
+		AppPkg:  "app",
+		AppName: root,
+		DockerF: "Dockerfile",
+	}
+
+	genRoot(root, params, agent.FS)
+	genPkg(root, params, agent.FS)
+
+	if len(apps) == 0 {
+		genApp(root, params, agent.FS)
+		genCmd(root, params, agent.FS)
+		return
+	}
+
+	for _, name := range apps {
+		params.AppPkg = "app/" + name
+		params.AppName = name
+		params.DockerF = "Dockerfile." + name
+
+		genApp(root, params, agent.FS, name)
+		genCmd(root, params, agent.FS, name)
+	}
+}
+
+func InitAgentApp(root, mod, name string) {
+	params := &Params{
+		Module:  mod,
+		AppPkg:  "app/" + name,
+		AppName: name,
+		DockerF: "Dockerfile." + name,
+	}
+
+	genApp(root, params, agent.FS, name)
+	genCmd(root, params, agent.FS, name)
 }
 
 func InitEnt(root, mod string, name ...string) {

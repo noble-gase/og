@@ -2,45 +2,50 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/noble-gase/ne/closekit"
+	"github.com/noble-gase/ne/redkit"
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/go-redis/v9/maintnotifications"
-	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
 var ErrClientNil = errors.New("redis client is nil (forgotten initialize?)")
 
 func New(cfgName string) redis.UniversalClient {
-	cfg := &redis.UniversalOptions{
-		Addrs: viper.GetStringSlice(cfgName + ".addrs"),
+	var cfg redkit.Config
+	if err := viper.UnmarshalKey(cfgName, &cfg); err != nil {
+		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
+	}
+
+	opts := &redis.UniversalOptions{
+		Addrs: cfg.Addrs,
 		MaintNotificationsConfig: &maintnotifications.Config{
 			Mode: maintnotifications.ModeDisabled,
 		},
+		Username:        cfg.Options.Username,
+		Password:        cfg.Options.Password,
+		DialTimeout:     time.Duration(cfg.Options.DialTimeout) * time.Second,
+		ReadTimeout:     time.Duration(cfg.Options.ReadTimeout) * time.Second,
+		WriteTimeout:    time.Duration(cfg.Options.WriteTimeout) * time.Second,
+		PoolSize:        cfg.Options.PoolSize,
+		PoolTimeout:     time.Duration(cfg.Options.PoolTimeout) * time.Second,
+		MinIdleConns:    cfg.Options.MinIdleConns,
+		MaxIdleConns:    cfg.Options.MaxIdleConns,
+		MaxActiveConns:  cfg.Options.MaxActiveConns,
+		ConnMaxIdleTime: time.Duration(cfg.Options.ConnMaxIdleTime) * time.Second,
+		ConnMaxLifetime: time.Duration(cfg.Options.ConnMaxLifetime) * time.Second,
 	}
-
-	opts := viper.GetStringMap(cfgName + ".options")
-	if len(opts) != 0 {
-		cfg.DB = cast.ToInt(opts["db"])
-		cfg.Username = cast.ToString(opts["username"])
-		cfg.Password = cast.ToString(opts["password"])
-		cfg.DialTimeout = cast.ToDuration(opts["dial_timeout"]) * time.Second
-		cfg.ReadTimeout = cast.ToDuration(opts["read_timeout"]) * time.Second
-		cfg.WriteTimeout = cast.ToDuration(opts["write_timeout"]) * time.Second
-		cfg.PoolSize = cast.ToInt(opts["pool_size"])
-		cfg.PoolTimeout = cast.ToDuration(opts["pool_timeout"]) * time.Second
-		cfg.MinIdleConns = cast.ToInt(opts["min_idle_conns"])
-		cfg.MaxIdleConns = cast.ToInt(opts["max_idle_conns"])
-		cfg.MaxActiveConns = cast.ToInt(opts["max_active_conns"])
-		cfg.ConnMaxIdleTime = cast.ToDuration(opts["conn_max_idle_time"]) * time.Second
-		cfg.ConnMaxLifetime = cast.ToDuration(opts["conn_max_lifetime"]) * time.Second
+	if cfg.Options.InsecureSkipVerify {
+		opts.TLSConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
 	}
-
-	client := redis.NewUniversalClient(cfg)
+	client := redis.NewUniversalClient(opts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

@@ -1,0 +1,42 @@
+package cmd
+
+import (
+	"context"
+	"os"
+
+	"{{.Module}}/internal/{{.AppPkg}}/config"
+
+	"github.com/noble-gase/ne/closekit"
+	"github.com/urfave/cli/v3"
+)
+
+func Init() {
+	cmd := &cli.Command{
+		Version:     "v1.0.0",
+		Description: "Go App (build with og)",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "config",
+				Aliases: []string{"c"},
+				Usage:   "set config file",
+				Value:   "config.toml",
+			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			config.Init(cmd.String("config"))
+			return ctx, nil
+		},
+		After: func(_ context.Context, _ *cli.Command) error {
+			closekit.Close()
+			return nil
+		},
+		Commands: []*cli.Command{
+			serve(),
+		},
+	}
+
+	// 执行命令
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		panic(err)
+	}
+}

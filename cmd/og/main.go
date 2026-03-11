@@ -41,6 +41,7 @@ func new() *cobra.Command {
 	var grpc bool
 	var proto bool
 	var mcp bool
+	var agent bool
 	var mod string
 	var apps []string
 	cmd := &cobra.Command{
@@ -74,6 +75,13 @@ func new() *cobra.Command {
 			"og new demo --mod xxx.com/demo --mcp",
 			"og new demo --app foo --app bar --mcp",
 			"og new demo --mod xxx.com/demo --app foo --app bar --mcp",
+			"",
+			"👉 -- Agent --",
+			"og new . --agent",
+			"og new demo --agent",
+			"og new demo --mod xxx.com/demo --agent",
+			"og new demo --app foo --app bar --agent",
+			"og new demo --mod xxx.com/demo --app foo --app bar --agent",
 		),
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
@@ -106,7 +114,9 @@ func new() *cobra.Command {
 			}
 			// 创建项目文件
 			fmt.Println("🐹 Create project files")
-			if mcp {
+			if agent {
+				internal.InitAgentProject(workDir, mod, apps...)
+			} else if mcp {
 				internal.InitMcpProject(workDir, mod, apps...)
 			} else {
 				if grpc {
@@ -137,6 +147,7 @@ func new() *cobra.Command {
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "create a gRPC project")
 	cmd.Flags().BoolVar(&proto, "proto", false, "use proto to define the API")
 	cmd.Flags().BoolVar(&mcp, "mcp", false, "create a MCP project")
+	cmd.Flags().BoolVar(&agent, "agent", false, "create an Agent project")
 	cmd.Flags().StringVar(&mod, "mod", "", "set the module name (default is the project name)")
 	cmd.Flags().StringSliceVar(&apps, "app", nil, "create a multi-application project")
 	return cmd
@@ -146,6 +157,7 @@ func app() *cobra.Command {
 	var grpc bool
 	var proto bool
 	var mcp bool
+	var agent bool
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "create an application",
@@ -165,6 +177,10 @@ func app() *cobra.Command {
 			"👉 -- MCP --",
 			"og app foo --mcp",
 			"og app foo bar --mcp",
+			"",
+			"👉 -- Agent --",
+			"og app foo --agent",
+			"og app foo bar --agent",
 		),
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
@@ -186,7 +202,14 @@ func app() *cobra.Command {
 			}
 			// 创建应用文件
 			fmt.Println("🐹 Create application files")
-			if mcp {
+			if agent {
+				for _, name := range args {
+					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
+						log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
+					}
+					internal.InitAgentApp(".", f.Module.Mod.Path, name)
+				}
+			} else if mcp {
 				for _, name := range args {
 					if path, ok := internal.IsDirEmpty("internal/app/" + name); !ok {
 						log.Fatalf("👿 The directory(%s) is not empty, please confirm!", path)
@@ -224,6 +247,7 @@ func app() *cobra.Command {
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "create a gRPC application")
 	cmd.Flags().BoolVar(&proto, "proto", false, "use proto to define the API")
 	cmd.Flags().BoolVar(&mcp, "mcp", false, "create a MCP application")
+	cmd.Flags().BoolVar(&agent, "agent", false, "create an Agent application")
 	return cmd
 }
 

@@ -1,0 +1,31 @@
+[app]
+env = "dev"
+addr = "0.0.0.0:8000"
+debug = true
+secret = "9c7695a0635e89a9ed1e8c13428fffd7"
+
+[session]
+driver = "mysql"
+dsn = "kingshardadmin:Kwbd7246005c039789d9@tcp(test.db.sunmi.com:3306)/agent_session_iota?charset=utf8mb4&parseTime=true&loc=Local"
+options = { max_open_conns = 100, max_idle_conns = 10, conn_max_idle_time = 300, conn_max_lifetime = 600 }
+
+[redis]
+addrs = ["base.redis.test.sunmi.com:6379"]
+options = { username = "", password = "mQA9Ja%TMn3g3PTr", dial_timeout = 10, read_timeout = 10, write_timeout = 10, pool_size = 20, pool_timeout = 10, min_idle_conns = 5, max_idle_conns = 20, max_active_conns = 100, conn_max_idle_time = 300, conn_max_lifetime = 600 }
+
+[log]
+path = "logs/app.log"
+options = { max_size = 100, max_age = 7, max_backups = 10, compress = true, stdout = true }
+
+[dingtalk]
+clientId = "dingoahtoy5j5dohekpx"
+clientSecret = "kPFy13fPosHhYiPZFwracMhwenIELywavefdMUW5tJPKjA1Hsaqf8gpIS-DT4BPn"
+cardTemplateId = "45a82f5f-dce1-4e0b-9d68-524b61eda56a.schema"
+
+[llm]
+model = "glm-4.6v"
+apiKey = "8002e9a380844f61afb00a15ef2ecc05.VpqPKe1hnklFASLS"
+baseURL = "https://open.bigmodel.cn/api/paas/v4"
+
+[[mcp]]
+endpoint = "http://localhost:8080/mcp/demo"
