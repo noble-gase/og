@@ -40,15 +40,12 @@ func serving(ctx context.Context) {
 	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
-	grpcAddr := ":" + viper.GetString("port.grpc")
-	httpAddr := ":" + viper.GetString("port.http")
-
 	// serve grpc
 	grpcSrv := server.NewGrpcServer()
-	go server.ServeGrpc(grpcSrv, grpcAddr)
+	go server.ServeGrpc(grpcSrv)
 
 	// serve http
-	conn, err := grpc.NewClient(grpcAddr,
+	conn, err := grpc.NewClient(viper.GetString("addr.grpc"),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoff.Config{
@@ -68,7 +65,7 @@ func serving(ctx context.Context) {
 	if err != nil {
 		panic(fmt.Errorf("NewClient: %w", err))
 	}
-	httpSrv := server.NewHttpServer(ctx, conn, httpAddr)
+	httpSrv := server.NewHttpServer(ctx, conn)
 	go server.ServeHttp(httpSrv)
 
 	// 阻塞直到接收到信号

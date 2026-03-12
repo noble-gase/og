@@ -1,6 +1,6 @@
 [app]
 env = "dev"
-port = 8000
+addr = "0.0.0.0:8000"
 debug = true
 secret = "9c7695a0635e89a9ed1e8c13428fffd7"
 

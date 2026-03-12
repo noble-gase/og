@@ -11,7 +11,6 @@ import (
 
 	"{{.Module}}/internal/{{.AppPkg}}/server"
 
-	"github.com/spf13/viper"
 	"github.com/urfave/cli/v3"
 )
 
@@ -36,17 +35,12 @@ func serving(ctx context.Context) {
 	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
-	baseURL := viper.GetString("app.baseURL")
-
-	mcpAddr := ":" + viper.GetString("port.mcp")
-	httpAddr := ":" + viper.GetString("port.http")
-
-	// 启动 SSE 服务
-	sseSrv := server.NewSSEServer(baseURL)
-	go server.ServeSSE(sseSrv, mcpAddr)
+	// 启动 MCP 服务
+	mcpSrv := server.NewMCPServer()
+	go server.ServeMCP(mcpSrv)
 
 	// 启动 HTTP 服务
-	httpSrv := server.NewHTTPServer(httpAddr)
+	httpSrv := server.NewHTTPServer()
 	go server.ServeHttp(httpSrv)
 
 	// 阻塞直到接收到信号
@@ -56,8 +50,8 @@ func serving(ctx context.Context) {
 	// 关闭服务
 	shutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	if err := sseSrv.Shutdown(shutCtx); err != nil {
-		slog.ErrorContext(ctx, "sse server shutdown failed", slog.String("error", err.Error()))
+	if err := mcpSrv.Shutdown(shutCtx); err != nil {
+		slog.ErrorContext(ctx, "mcp server shutdown failed", slog.String("error", err.Error()))
 	}
 	if err := httpSrv.Shutdown(shutCtx); err != nil {
 		slog.ErrorContext(ctx, "http server shutdown failed", slog.String("error", err.Error()))

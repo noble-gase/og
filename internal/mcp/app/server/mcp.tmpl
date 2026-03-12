@@ -1,0 +1,39 @@
+package server
+
+import (
+	"fmt"
+	"net/http"
+	"time"
+
+	"{{.Module}}/pkg/middleware"
+
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/spf13/viper"
+)
+
+func NewMCPServer() *server.StreamableHTTPServer {
+	// Create a new MCP server
+	srv := server.NewMCPServer("Demo MCP Server", "1.0.0",
+		server.WithToolCapabilities(true),
+		server.WithToolHandlerMiddleware(middleware.Recovery),
+		server.WithToolHandlerMiddleware(middleware.Header),
+		server.WithToolHandlerMiddleware(middleware.Log),
+	)
+	AddTools(srv)
+
+	// Create the streamable http server
+	return server.NewStreamableHTTPServer(srv,
+		server.WithStateLess(false),
+		server.WithEndpointPath("/mcp/demo"),
+		server.WithHeartbeatInterval(15*time.Second),
+	)
+}
+
+func ServeMCP(srv *server.StreamableHTTPServer) {
+	addr := viper.GetString("addr.mcp")
+
+	fmt.Println("Serving MCP on", addr)
+	if err := srv.Start(addr); err != nil && err != http.ErrServerClosed {
+		panic(fmt.Errorf("ServeMCP: %w", err))
+	}
+}

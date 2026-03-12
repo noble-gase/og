@@ -14,53 +14,51 @@ import (
 	"google.golang.org/genai"
 )
 
-var _ model.LLM = &OpenAIModel{}
-
 var (
 	ErrNoChoicesInResponse   = errors.New("no choices in OpenAI response")
 	ErrUnknownPartInResponse = errors.New("unknown part type in genai content")
 )
 
-type OpenAIModel struct {
-	Client    *openai.Client
-	ModelName string
+type openaiModel struct {
+	client *openai.Client
+	name   string
 }
 
-func NewOpenAIModelWithAPIKey(modelName string, apiKey string) *OpenAIModel {
-	cfg := openai.DefaultConfig(apiKey)
-	return NewOpenAIModel(modelName, cfg)
-}
-
-func NewOpenAIModel(modelName string, cfg openai.ClientConfig) *OpenAIModel {
+func NewModel(modelName string, cfg openai.ClientConfig) model.LLM {
 	client := openai.NewClientWithConfig(cfg)
-	return &OpenAIModel{
-		Client:    client,
-		ModelName: modelName,
+	return &openaiModel{
+		client: client,
+		name:   modelName,
 	}
+}
+
+func NewModelWithAPIKey(modelName string, apiKey string) model.LLM {
+	cfg := openai.DefaultConfig(apiKey)
+	return NewModel(modelName, cfg)
 }
 
 // Name implements model.LLM.
-func (o *OpenAIModel) Name() string {
-	return o.ModelName
+func (m *openaiModel) Name() string {
+	return m.name
 }
 
 // GenerateContent implements model.LLM.
-func (o *OpenAIModel) GenerateContent(ctx context.Context, req *model.LLMRequest, stream bool) iter.Seq2[*model.LLMResponse, error] {
+func (m *openaiModel) GenerateContent(ctx context.Context, req *model.LLMRequest, stream bool) iter.Seq2[*model.LLMResponse, error] {
 	if stream {
-		return o.generateStream(ctx, req)
+		return m.generateStream(ctx, req)
 	}
-	return o.generate(ctx, req)
+	return m.generate(ctx, req)
 }
 
-func (o *OpenAIModel) generate(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
+func (m *openaiModel) generate(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
-		openaiReq, err := toOpenAIChatCompletionRequest(req, o.ModelName)
+		openaiReq, err := toOpenAIChatCompletionRequest(req, m.name)
 		if err != nil {
 			yield(nil, err)
 			return
 		}
 
-		resp, err := o.Client.CreateChatCompletion(ctx, openaiReq)
+		resp, err := m.client.CreateChatCompletion(ctx, openaiReq)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -76,16 +74,16 @@ func (o *OpenAIModel) generate(ctx context.Context, req *model.LLMRequest) iter.
 	}
 }
 
-func (o *OpenAIModel) generateStream(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
+func (m *openaiModel) generateStream(ctx context.Context, req *model.LLMRequest) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
-		openaiReq, err := toOpenAIChatCompletionRequest(req, o.ModelName)
+		openaiReq, err := toOpenAIChatCompletionRequest(req, m.name)
 		if err != nil {
 			yield(nil, err)
 			return
 		}
 		openaiReq.Stream = true
 
-		stream, err := o.Client.CreateChatCompletionStream(ctx, openaiReq)
+		stream, err := m.client.CreateChatCompletionStream(ctx, openaiReq)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -143,19 +141,18 @@ func (o *OpenAIModel) generateStream(ctx context.Context, req *model.LLMRequest)
 				lastPartIsText = false
 			}
 
-			/* TODO: handle reasoning content
-			if choice.Delta.ReasoningContent != "" {
-				part := &genai.Part{Text: choice.Delta.ReasoningContent, Thought: true}
-				llmResp := &model.LLMResponse{
-					Content:      &genai.Content{Role: "model", Parts: []*genai.Part{part}},
-					Partial:      true,
-					TurnComplete: false,
-				}
-				if !yield(llmResp, nil) {
-					return
-				}
-			}
-			*/
+			//  TODO: handle reasoning content
+			// if choice.Delta.ReasoningContent != "" {
+			// 	part := &genai.Part{Text: choice.Delta.ReasoningContent, Thought: true}
+			// 	llmResp := &model.LLMResponse{
+			// 		Content:      &genai.Content{Role: "model", Parts: []*genai.Part{part}},
+			// 		Partial:      true,
+			// 		TurnComplete: false,
+			// 	}
+			// 	if !yield(llmResp, nil) {
+			// 		return
+			// 	}
+			// }
 
 			// Handle tool calls in delta - aggregate across chunks
 			if len(choice.Delta.ToolCalls) > 0 {

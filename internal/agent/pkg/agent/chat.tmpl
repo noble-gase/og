@@ -33,7 +33,7 @@ type Chat struct {
 
 // Ask 问答
 func (c *Chat) Ask(ctx context.Context, userId, text string) (iter.Seq2[*session.Event, error], error) {
-	lockKey := fmt.Sprintf("mutex:agent_iota:session:%s", userId)
+	lockKey := fmt.Sprintf("mutex:agent_demo:session:%s", userId)
 	lock := redlock.New(cache.R(), lockKey, time.Minute)
 	if err := lock.TryAcquire(ctx, 60, time.Second); err != nil {
 		return nil, err
@@ -98,15 +98,12 @@ func NewChat(session *Session) (*Chat, error) {
 	// LLM Model (OpenAI compatible)
 	cfg := go_openai.DefaultConfig(viper.GetString("llm.apiKey"))
 	cfg.BaseURL = viper.GetString("llm.baseURL")
-	model1 := openai.NewOpenAIModel(
-		viper.GetString("llm.model"), // e.g. "gpt-4o" 或 "qwen-max"
-		cfg,
-	)
+	myModel := openai.NewOpenAIModel(viper.GetString("llm.model"), cfg)
 
 	// LLM Agent
 	myAgent, err := llmagent.New(llmagent.Config{
 		Name:        session.AppName(),
-		Model:       model1,
+		Model:       myModel,
 		Description: "钉钉智能助手，可调用 MCP 工具回答问题",
 		Instruction: `你是一个企业内部智能助手。
 - 能通过 MCP 工具查询业务数据

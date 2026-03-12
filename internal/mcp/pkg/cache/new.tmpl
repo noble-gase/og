@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/redis/go-redis/v9/maintnotifications"
 	"github.com/spf13/viper"
 )
-
-var ErrClientNil = errors.New("redis client is nil (forgotten initialize?)")
 
 func New(cfgName string) redis.UniversalClient {
 	var cfg redkit.Config

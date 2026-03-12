@@ -86,7 +86,7 @@ func (c *Chatbot) streamAnswer(ctx context.Context, outTrackId, userId, question
 	var accumulated strings.Builder
 	for event, err := range events {
 		if err != nil {
-			c.card.StreamingUpdate(ctx, outTrackId, accumulated.String()+"\n\n> ⚠️ 出现错误", true)
+			c.card.StreamingUpdate(ctx, outTrackId, accumulated.String()+"\n\n> ⚠️ 出现错误"+err.Error(), true)
 			return
 		}
 
@@ -119,7 +119,7 @@ func (c *Chatbot) reply(ctx context.Context, webhook, answer string) error {
 	body := helper.X{
 		"msgtype": "markdown",
 		"markdown": helper.X{
-			"title": "IOTA",
+			"title": "Demo",
 			"text":  answer,
 		},
 	}

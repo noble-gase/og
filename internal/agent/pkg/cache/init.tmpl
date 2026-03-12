@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/redis/go-redis/v9"
+import (
+	"errors"
+
+	"github.com/redis/go-redis/v9"
+)
 
 var uc redis.UniversalClient
 
@@ -10,7 +14,7 @@ func Init() {
 
 func R() redis.UniversalClient {
 	if uc == nil {
-		panic(ErrClientNil)
+		panic(errors.New("redis client is nil (forgotten initialize?)"))
 	}
 	return uc
 }

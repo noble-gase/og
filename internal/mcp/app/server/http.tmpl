@@ -3,9 +3,11 @@ package server
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/spf13/viper"
 )
 
-func NewHTTPServer(addr string) *http.Server {
+func NewHTTPServer() *http.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,7 @@ func NewHTTPServer(addr string) *http.Server {
 	})
 
 	return &http.Server{
-		Addr:    addr,
+		Addr:    viper.GetString("addr.http"),
 		Handler: mux,
 	}
 }

@@ -13,12 +13,13 @@ import (
 	"github.com/noble-gase/ne/cors"
 	"github.com/noble-gase/ne/helper"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *http.Server {
+func NewHttpServer(ctx context.Context, conn *grpc.ClientConn) *http.Server {
 	// Create http mux with health check
 	mux := runtime.NewServeMux(
 		runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(conn)),
@@ -58,7 +59,7 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn, addr string) *htt
 	withCors := cors.New(cors.ACEH(helper.XTraceId)).Handler(mux)
 	// Serve HTTP server
 	srv := &http.Server{
-		Addr:         addr,
+		Addr:         viper.GetString("addr.http"),
 		Handler:      withCors,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 20 * time.Second,

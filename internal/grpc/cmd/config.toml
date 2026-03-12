@@ -3,9 +3,9 @@ env = "dev"
 debug = true
 secret = "9c7695a0635e89a9ed1e8c13428fffd7"
 
-[port]
-grpc = 50051
-http = 8000
+[addr]
+grpc = "0.0.0.0:50051"
+http = "0.0.0.0:8000"
 
 [db]
 driver = "mysql"

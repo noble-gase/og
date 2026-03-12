@@ -51,7 +51,7 @@ func serving(ctx context.Context) {
 
 	// 创建服务
 	srv := &http.Server{
-		Addr:         ":" + viper.GetString("app.port"),
+		Addr:         viper.GetString("app.addr"),
 		Handler:      r,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 20 * time.Second,

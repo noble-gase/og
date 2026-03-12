@@ -9,6 +9,7 @@ import (
 	"{{.Module}}/internal/{{.AppPkg}}/service/greeter"
 	"{{.Module}}/pkg/middleware"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -40,7 +41,9 @@ func NewGrpcServer() *grpc.Server {
 	return srv
 }
 
-func ServeGrpc(srv *grpc.Server, addr string) {
+func ServeGrpc(srv *grpc.Server) {
+	addr := viper.GetString("addr.grpc")
+
 	// Create a listener on TCP port
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
