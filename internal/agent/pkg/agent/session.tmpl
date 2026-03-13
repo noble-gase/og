@@ -17,7 +17,7 @@ type Session struct {
 	appname    string
 	db         *sql.DB
 	service    session.Service
-	sessionMap sync.Map
+	sidMap sync.Map
 }
 
 func (s *Session) AppName() string {
@@ -30,7 +30,7 @@ func (s *Session) Service() session.Service {
 
 func (s *Session) GetOrCreate(ctx context.Context, userId string) (string, error) {
 	// 先从内存中获取
-	if v, ok := s.sessionMap.Load(userId); ok {
+	if v, ok := s.sidMap.Load(userId); ok {
 		return v.(string), nil
 	}
 
@@ -44,7 +44,7 @@ func (s *Session) GetOrCreate(ctx context.Context, userId string) (string, error
 	}
 	if len(list.Sessions) != 0 {
 		sid := list.Sessions[0].ID()
-		s.sessionMap.Store(userId, sid)
+		s.sidMap.Store(userId, sid)
 		return sid, nil
 	}
 
@@ -56,7 +56,7 @@ func (s *Session) GetOrCreate(ctx context.Context, userId string) (string, error
 	if err != nil {
 		return "", err
 	}
-	s.sessionMap.Store(userId, session.Session.ID())
+	s.sidMap.Store(userId, session.Session.ID())
 	return session.Session.ID(), nil
 }
 

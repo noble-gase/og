@@ -8,11 +8,10 @@ import (
 
 	"{{.Module}}/pkg/cache"
 
-	openai "github.com/byebyebruce/adk-go-openai"
+	"github.com/achetronic/adk-utils-go/genai/openai"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/noble-gase/ne/helper"
 	"github.com/noble-gase/ne/redlock"
-	go_openai "github.com/sashabaranov/go-openai"
 	"github.com/spf13/viper"
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/agent/llmagent"
@@ -96,19 +95,33 @@ func NewChat(session *Session) (*Chat, error) {
 	}
 
 	// LLM Model (OpenAI compatible)
-	cfg := go_openai.DefaultConfig(viper.GetString("llm.apiKey"))
-	cfg.BaseURL = viper.GetString("llm.baseURL")
-	myModel := openai.NewOpenAIModel(viper.GetString("llm.model"), cfg)
+	llmModel := openai.New(openai.Config{
+		APIKey:    viper.GetString("llm.apiKey"),
+		BaseURL:   viper.GetString("llm.baseURL"),
+		ModelName: viper.GetString("llm.model"),
+	})
 
 	// LLM Agent
-	myAgent, err := llmagent.New(llmagent.Config{
+	llmAgent, err := llmagent.New(llmagent.Config{
 		Name:        session.AppName(),
-		Model:       myModel,
-		Description: "钉钉智能助手，可调用 MCP 工具回答问题",
+		Model:       llmModel,
+		Description: "IOTA智能助手",
 		Instruction: `你是一个企业内部智能助手。
-- 能通过 MCP 工具查询业务数据
+## 基本规则
+- 用中文回答
 - 回答简洁、准确，使用 Markdown 格式
-- 遇到不确定的问题，如实告知`,
+- 如果用户问的问题与工具列表范围无关，请告知用户无法处理
+- 遇到不确定的问题，请如实告知，并让用户找「盛辉」确认
+
+## 时间处理
+工具返回的时间戳统一按以下规则显示：
+- 10位数字（秒时间戳），转换为 "YYYY-MM-DD HH:mm:ss" 格式
+- 13位数字（毫秒时间戳），转换为 "YYYY-MM-DD HH:mm:ss.SSS" 格式
+- 时区统一为 Asia/Shanghai
+
+示例：
+- 1773214741 -> 2026-03-11 17:39:01
+- 1773214741567 -> 2026-03-11 17:39:01.567`,
 		Toolsets: toolsets,
 		BeforeModelCallbacks: []llmagent.BeforeModelCallback{
 			func(ctx agent.CallbackContext, req *model.LLMRequest) (*model.LLMResponse, error) {
@@ -127,7 +140,7 @@ func NewChat(session *Session) (*Chat, error) {
 	// Runner
 	r, err := runner.New(runner.Config{
 		AppName:        session.AppName(),
-		Agent:          myAgent,
+		Agent:          llmAgent,
 		SessionService: session.Service(),
 	})
 	if err != nil {
