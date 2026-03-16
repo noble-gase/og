@@ -319,9 +319,11 @@ og new demo --mod xxx.com/demo --agent # 指定module-path
 │       ├── config
 │       └── server
 ├── pkg
-│   ├── agent
-│   ├── channel
-│   └── openai
+│   ├── dingtalk
+│   ├── llmchat
+│   ├── log
+│   ├── session
+│   └── assistant.go
 ├── Dockerfile
 ├── dockerun.sh
 ├── go.mod
@@ -354,9 +356,11 @@ og new demo --mod xxx.com/demo --app foo --app bar --agent # 指定module-path
 │           ├── config
 │           └── server
 ├── pkg
-│   ├── agent
-│   ├── channel
-│   └── openai
+│   ├── dingtalk
+│   ├── llmchat
+│   ├── log
+│   ├── session
+│   └── assistant.go
 ├── foo.dockerfile
 ├── foo.dockerun.sh
 ├── bar.dockerfile

@@ -1,0 +1,85 @@
+package server
+
+import (
+	"{{.Module}}/pkg"
+	"{{.Module}}/pkg/dingtalk"
+	"{{.Module}}/pkg/llmchat"
+
+	"github.com/achetronic/adk-utils-go/genai/openai"
+	"github.com/noble-gase/ne/redkit"
+	"github.com/noble-gase/ne/sqlkit"
+	"github.com/spf13/viper"
+)
+
+type McpList struct {
+	Mcp []McpCfg `mapstructure:"mcp"`
+}
+
+type McpCfg struct {
+	Endpoint string `mapstructure:"endpoint"`
+}
+
+func NewAssistant() *pkg.Assistant {
+	var sqlCfg sqlkit.Config
+	if err := viper.UnmarshalKey("session", &sqlCfg); err != nil {
+		panic(err)
+	}
+
+	var redisCfg redkit.Config
+	if err := viper.UnmarshalKey("redis", &redisCfg); err != nil {
+		panic(err)
+	}
+
+	var mcpList McpList
+	if err := viper.Unmarshal(&mcpList); err != nil {
+		panic(err)
+	}
+
+	cfg := &pkg.Config{
+		AppName: "IOTA-Agent",
+		LLMAgent: llmchat.Config{
+			Description: "IOTA智能助手",
+			Instruction: `你是一个企业内部智能助手。
+## 基本规则
+- 用中文回答
+- 回答简洁、准确，使用 Markdown 格式
+- 如果用户问的问题与工具列表范围无关，请告知用户无法处理
+- 遇到不确定的问题，请如实告知，并让用户找「盛辉」确认
+
+## 时间处理
+工具返回的时间戳统一按以下规则显示：
+- 10位数字（秒时间戳），转换为 "YYYY-MM-DD HH:mm:ss" 格式
+- 13位数字（毫秒时间戳），转换为 "YYYY-MM-DD HH:mm:ss.SSS" 格式
+- 时区统一为 Asia/Shanghai
+
+示例：
+- 1773214741 -> 2026-03-11 17:39:01
+- 1773214741567 -> 2026-03-11 17:39:01.567`,
+			MCP: []llmchat.MCP{},
+			LLM: openai.Config{
+				APIKey:      viper.GetString("llm.apiKey"),
+				BaseURL:     viper.GetString("llm.baseURL"),
+				ModelName:   viper.GetString("llm.model"),
+				HTTPOptions: openai.HTTPOptions{},
+			},
+		},
+		Session: sqlCfg,
+		Chatbot: dingtalk.Config{
+			ClientId:       viper.GetString("dingtalk.clientId"),
+			ClientSecret:   viper.GetString("dingtalk.clientSecret"),
+			CardTemplateId: viper.GetString("dingtalk.cardTemplateId"),
+			RedisConfig:    redisCfg,
+		},
+	}
+	for _, v := range mcpList.Mcp {
+		cfg.LLMAgent.MCP = append(cfg.LLMAgent.MCP, llmchat.MCP{
+			Endpoint: v.Endpoint,
+		})
+	}
+
+	assistant, err := pkg.NewAssistant(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return assistant
+}

@@ -34,11 +34,11 @@ func serving(ctx context.Context) {
 	sigCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	defer stop()
 
-	chatbot := server.NewDingtalkStream()
-	defer chatbot.Stop()
+	assistant := server.NewAssistant()
+	defer assistant.Stop()
 
-	// 启动钉钉Stream模式
-	go chatbot.Start()
+	// 启动助手Agent
+	go assistant.Start()
 
 	// 启动 HTTP 服务
 	httpSrv := server.NewHttpServer()

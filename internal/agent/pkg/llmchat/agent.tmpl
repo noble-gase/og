@@ -1,0 +1,66 @@
+package llmchat
+
+import (
+	"github.com/achetronic/adk-utils-go/genai/openai"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/noble-gase/ne/helper"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+	"google.golang.org/adk/model"
+	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/mcptoolset"
+)
+
+type MCP struct {
+	Endpoint string
+}
+
+type Config struct {
+	Description string
+	Instruction string
+	MCP         []MCP
+	LLM         openai.Config
+}
+
+func NewAgent(appname string, cfg *Config) (agent.Agent, error) {
+	// MCP Toolset (Streamable HTTP)
+	toolsets := make([]tool.Toolset, 0, len(cfg.MCP))
+	for _, v := range cfg.MCP {
+		transport := &mcp.StreamableClientTransport{
+			Endpoint:   v.Endpoint,
+			HTTPClient: helper.NewHttpClient(),
+		}
+		toolset, err := mcptoolset.New(mcptoolset.Config{
+			Transport: transport,
+		})
+		if err != nil {
+			return nil, err
+		}
+		toolsets = append(toolsets, toolset)
+	}
+
+	// LLM Model (OpenAI compatible)
+	llmModel := openai.New(cfg.LLM)
+
+	// LLM Agent
+	llmAgent, err := llmagent.New(llmagent.Config{
+		Name:        appname,
+		Model:       llmModel,
+		Description: cfg.Description,
+		Instruction: cfg.Instruction,
+		Toolsets:    toolsets,
+		BeforeModelCallbacks: []llmagent.BeforeModelCallback{
+			func(ctx agent.CallbackContext, req *model.LLMRequest) (*model.LLMResponse, error) {
+				// 只保留最近 10 条上下文信息，防止Token暴涨
+				if len(req.Contents) > MaxContextLen {
+					req.Contents = req.Contents[len(req.Contents)-MaxContextLen:]
+				}
+				return nil, nil
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return llmAgent, nil
+}

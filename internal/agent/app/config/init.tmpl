@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"{{.Module}}/pkg/cache"
 	"{{.Module}}/pkg/log"
 
 	"github.com/spf13/viper"
@@ -21,6 +20,4 @@ func Init(cfgFile string) {
 
 	// 初始化日志
 	log.Init()
-	// 初始化缓存
-	cache.Init()
 }
