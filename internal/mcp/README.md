@@ -42,11 +42,9 @@ og ent --help
 #### 环境验证
 
 ```shell
-curl -N -v http://localhost:9000/mcp/demo/sse
-
 sudo chown -R 501:20 "~/.npm"
 
-npx mcp-remote@latest http://localhost:8080/mcp/demo/sse --allow-http --debug
+npx mcp-remote@latest http://localhost:9000/mcp/demo --allow-http
 ```
 
 #### Claude 配置
@@ -56,13 +54,11 @@ npx mcp-remote@latest http://localhost:8080/mcp/demo/sse --allow-http --debug
 ```json
 {
     "mcpServers": {
-        "demo": {
+        "iotlink": {
             "command": "npx",
             "args": [
                 "mcp-remote@latest",
-                "http://localhost:8080/mcp/demo/sse",
-                "--transport",
-                "sse-only",
+                "http://localhost:9000/mcp/demo",
                 "--allow-http"
             ]
         }
