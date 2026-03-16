@@ -4,6 +4,8 @@
 
 > - 项目结构采用[标准布局](https://github.com/golang-standards/project-layout)
 > - 配合 `protoc-gen-og`，支持使用 `proto` 定义API
+> - MCP 服务基于 [mcp-go](https://github.com/mark3labs/mcp-go)
+> - Agent 服务基于 [adk-go](https://github.com/google/adk-go)
 
 ## 安装
 
