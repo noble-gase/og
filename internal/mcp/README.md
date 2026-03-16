@@ -2,7 +2,7 @@
 
 Go MCP服务快速开发脚手架
 
-- MCP使用 [mcp-go](https://github.com/mark3labs/mcp-go)
+- 基于 [mcp-go](https://github.com/mark3labs/mcp-go) 构建
 - 数据库使用 [jet](https://github.com/go-jet/jet)
 - Redis使用 [go-redis](https://github.com/redis/go-redis)
 - 配置使用 [viper](https://github.com/spf13/viper)
