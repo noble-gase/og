@@ -1,6 +1,6 @@
 # og - 项目脚手架
 
-自动生成项目，支持 `HTTP` 和 `gRPC`，并同时支持创建「单应用」和「多应用」
+支持创建 `HTTP` 和 `gRPC` 以及 `MCP` 和 `Agent` 项目，支持「单应用」和「多应用」模式
 
 > - 项目结构采用[标准布局](https://github.com/golang-standards/project-layout)
 > - 配合 `protoc-gen-og`，支持使用 `proto` 定义API
