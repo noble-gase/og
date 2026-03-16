@@ -8,7 +8,7 @@
 
 ## og
 
-支持创建 `HTTP` 和 `gRPC` 以及 `MCP` 和 `Agent` 项目，并同时支持创建「单应用」和「多应用」
+支持创建 `HTTP` 和 `gRPC` 以及 `MCP` 和 `Agent` 项目，并支持「单应用」和「多应用」模式
 
 ```shell
 go install github.com/noble-gase/og/cmd/og@latest
@@ -28,7 +28,7 @@ go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
 
 ## gg
 
-受 `protoc-gen-go` 启发，为结构体生成 `Get` 方法【支持泛型!!!】，避免空指针引起的Panic
+受 `protoc-gen-go` 启发，为结构体字段生成 `Get` 方法【支持泛型!!!】，避免空指针引起的Panic
 
 ```shell
 go install github.com/noble-gase/og/cmd/gg@latest
