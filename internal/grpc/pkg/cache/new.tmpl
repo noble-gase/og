@@ -1,15 +1,11 @@
 package cache
 
 import (
-	"context"
-	"crypto/tls"
 	"fmt"
-	"time"
 
 	"github.com/noble-gase/ne/closekit"
 	"github.com/noble-gase/ne/redkit"
 	"github.com/redis/go-redis/v9"
-	"github.com/redis/go-redis/v9/maintnotifications"
 	"github.com/spf13/viper"
 )
 
@@ -21,7 +17,7 @@ func New(cfgName string) redis.UniversalClient {
 
 	client, err := redkit.NewClient(&cfg)
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
 	}
 
 	closekit.Add(cfgName, closekit.P80, func() error {
