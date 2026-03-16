@@ -17,6 +17,9 @@ go install github.com/noble-gase/og/cmd/og@latest
 
 ### HTTP
 
+<details>
+<summary>点击展开</summary>
+
 ##### 单应用
 
 ```shell
@@ -82,7 +85,12 @@ og new demo --mod xxx.com/demo --app foo --app bar # 指定module-path
 └── README.md
 ```
 
+</details>
+
 ### HTTP -- 使用proto定义API
+
+<details>
+<summary>点击展开</summary>
 
 ##### 单应用
 
@@ -162,7 +170,12 @@ og new demo --mod xxx.com/demo --app foo --app bar --proto # 指定module-path
 └── README.md
 ```
 
+</details>
+
 ### gRPC
+
+<details>
+<summary>点击展开</summary>
 
 ##### 单应用
 
@@ -239,7 +252,12 @@ og new demo --mod xxx.com/demo --app foo --app bar --grpc # 指定module-path
 └── README.md
 ```
 
+</details>
+
 ### MCP
+
+<details>
+<summary>点击展开</summary>
 
 ##### 单应用
 
@@ -303,7 +321,12 @@ og new demo --mod xxx.com/demo --app foo --app bar --mcp # 指定module-path
 └── README.md
 ```
 
+</details>
+
 ### Agent
+
+<details>
+<summary>点击展开</summary>
 
 ##### 单应用
 
@@ -372,7 +395,12 @@ og new demo --mod xxx.com/demo --app foo --app bar --agent # 指定module-path
 └── README.md
 ```
 
+</details>
+
 ## 创建应用
+
+<details>
+<summary>点击展开</summary>
 
 > 多应用项目适用，需在项目根目录执行（即：`go.mod` 所在目录）
 
@@ -408,7 +436,12 @@ og app foo bar --agent # 创建两个Agent应用 -- foo 和 bar
 └── README.md
 ```
 
+</details>
+
 ## 创建Ent实例
+
+<details>
+<summary>点击展开</summary>
 
 #### 单实例
 
@@ -451,3 +484,5 @@ og ent foo bar # 创建Ent实例 -- foo 和 bar
 ├── go.sum
 └── README.md
 ```
+
+</details>
