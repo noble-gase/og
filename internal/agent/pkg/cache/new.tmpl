@@ -1,0 +1,28 @@
+package cache
+
+import (
+	"fmt"
+
+	"github.com/noble-gase/ne/closekit"
+	"github.com/noble-gase/ne/redkit"
+	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
+)
+
+func New(cfgName string) redis.UniversalClient {
+	var cfg redkit.Config
+	if err := viper.UnmarshalKey(cfgName, &cfg); err != nil {
+		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
+	}
+
+	client, err := redkit.NewClient(&cfg)
+	if err != nil {
+		panic(fmt.Errorf("Redis(%s) init failed: %w", cfgName, err))
+	}
+
+	closekit.Add(cfgName, closekit.P80, func() error {
+		return client.Close()
+	})
+
+	return client
+}

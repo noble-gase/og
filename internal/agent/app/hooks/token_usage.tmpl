@@ -1,0 +1,29 @@
+package hooks
+
+import (
+	"log/slog"
+
+	"{{.Module}}/pkg/log"
+
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/model"
+)
+
+func TokenUsage(ctx agent.CallbackContext, resp *model.LLMResponse, err error) (*model.LLMResponse, error) {
+	if resp != nil {
+		if um := resp.UsageMetadata; um != nil {
+			log.Info(ctx, "token usage",
+				slog.String("user_id", ctx.UserID()),
+				slog.String("session_id", ctx.SessionID()),
+				slog.String("agent_name", ctx.AgentName()),
+				slog.Int("cached_content_tokens", int(um.CachedContentTokenCount)),
+				slog.Int("candidates_tokens", int(um.CandidatesTokenCount)),
+				slog.Int("prompt_tokens", int(um.PromptTokenCount)),
+				slog.Int("thoughts_tokens", int(um.ThoughtsTokenCount)),
+				slog.Int("tool_use_prompt_tokens", int(um.ToolUsePromptTokenCount)),
+				slog.Int("total_tokens", int(um.TotalTokenCount)),
+			)
+		}
+	}
+	return nil, nil
+}

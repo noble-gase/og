@@ -1,0 +1,28 @@
+package db
+
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/noble-gase/ne/closekit"
+	"github.com/noble-gase/ne/sqlkit"
+	"github.com/spf13/viper"
+)
+
+func New(cfgName string) *sql.DB {
+	var cfg sqlkit.Config
+	if err := viper.UnmarshalKey(cfgName, &cfg); err != nil {
+		panic(fmt.Errorf("DB(%s) init failed: %w", cfgName, err))
+	}
+
+	db, err := sqlkit.NewDB(&cfg)
+	if err != nil {
+		panic(fmt.Errorf("DB(%s) init failed: %w", cfgName, err))
+	}
+
+	closekit.Add(cfgName, closekit.P90, func() error {
+		return db.Close()
+	})
+
+	return db
+}

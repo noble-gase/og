@@ -20,12 +20,24 @@ options = { max_size = 100, max_age = 7, max_backups = 10, compress = true, stdo
 [dingtalk]
 clientId = ""
 clientSecret = ""
-cardTemplateId = ""
+cardTemplateId = "xxxxxx.schema"
 
 [llm]
-model = "glm-4.6v"
-apiKey = ""
-baseURL = "https://open.bigmodel.cn/api/paas/v4"
+model = "glm-5"
+apiKey = "sk-xxxxxx"
+baseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 [[mcp]]
-endpoint = "http://localhost:9000/mcp/demo"
+name = "demo"
+endpoint = "http://localhost:8080/mcp/demo"
+description = "xxx相关工具"
+instruction = """
+你是一个「xxx」相关的工具集合，你可以回答「xxx」相关的问题。
+## 基本规则
+- 用中文回答，简洁、准确，使用 Markdown 格式
+- 列表数据，请使用 Markdown 表格输出展示
+- 不要凭自身知识回答问题，必须通过工具获取正确的信息
+- 如果用户的问题与工具列表范围无关，请告知用户无法处理
+- 只处理数据中心在「国内」的设备，其他数据中心的设备无法处理
+- 遇到工具不能处理的问题，请如实告知，并让用户找「xxx」确认
+"""

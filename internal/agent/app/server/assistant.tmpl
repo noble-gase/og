@@ -1,0 +1,89 @@
+package server
+
+import (
+	"{{.Module}}/internal/{{.AppPkg}}/hooks"
+	"{{.Module}}/pkg/cache"
+	"{{.Module}}/pkg/db"
+
+	"github.com/noble-gase/ar"
+	"github.com/noble-gase/ar/dingtalk"
+	"github.com/noble-gase/ar/llmchat"
+	"github.com/noble-gase/ar/model/openai"
+	"github.com/spf13/viper"
+	"google.golang.org/adk/agent/llmagent"
+	"gorm.io/driver/mysql"
+)
+
+type MCPCfg struct {
+	Name        string `mapstructure:"name"`
+	Endpoint    string `mapstructure:"endpoint"`
+	Description string `mapstructure:"description"`
+	Instruction string `mapstructure:"instruction"`
+}
+
+type MCPList struct {
+	List []MCPCfg `mapstructure:"mcp"`
+}
+
+func NewAssistant() *ar.Assistant {
+	var mcp MCPList
+	if err := viper.Unmarshal(&mcp); err != nil {
+		panic(err)
+	}
+
+	// agent
+	agent := &llmchat.AgentTool{
+		Name:        "demo",
+		Description: "Demo智能助手",
+		Instruction: `你是一个企业内部智能助手，负责理解用户意图并将任务分发给合适的 Agent 工具。
+## 基本规则
+- 不要凭自身知识回答问题，必须通过 Agent 工具获取正确的信息`,
+		LLMAdapter: &llmchat.OpenAI{
+			Config: openai.Config{
+				APIKey:    viper.GetString("llm.apiKey"),
+				BaseURL:   viper.GetString("llm.baseURL"),
+				ModelName: viper.GetString("llm.model"),
+			},
+		},
+		Tools: make([]llmchat.AgentBuilder, 0, len(mcp.List)),
+		ModelHooks: llmchat.ModelCallback{
+			After: []llmagent.AfterModelCallback{
+				hooks.TokenUsage,
+			},
+		},
+	}
+	for _, v := range mcp.List {
+		agent.Tools = append(agent.Tools, &llmchat.MCPAgent{
+			Name:        v.Name,
+			Endpoints:   []string{v.Endpoint},
+			Description: v.Description,
+			Instruction: v.Instruction,
+			ModelHooks: llmchat.ModelCallback{
+				After: []llmagent.AfterModelCallback{
+					hooks.TokenUsage,
+				},
+			},
+		})
+	}
+
+	// llmchat
+	dialector := mysql.New(mysql.Config{
+		Conn: db.DB(),
+	})
+	chat, err := ar.NewLLMChat("Demo-Agent", dialector, cache.R(), agent)
+	if err != nil {
+		panic(err)
+	}
+
+	// dingtalk
+	cfg := &dingtalk.Config{
+		ClientId:       viper.GetString("dingtalk.clientId"),
+		ClientSecret:   viper.GetString("dingtalk.clientSecret"),
+		CardTemplateId: viper.GetString("dingtalk.cardTemplateId"),
+	}
+	assistant, err := ar.NewAssistant(cfg, cache.R(), chat)
+	if err != nil {
+		panic(err)
+	}
+	return assistant
+}

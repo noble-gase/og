@@ -1,0 +1,19 @@
+package db
+
+import (
+	"database/sql"
+	"errors"
+)
+
+var db *sql.DB
+
+func Init() {
+	db = New("db")
+}
+
+func DB() *sql.DB {
+	if db == nil {
+		panic(errors.New("db is nil (forgotten initialize?)"))
+	}
+	return db
+}
