@@ -1,8 +1,8 @@
 # gg
 
-受 `protoc-gen-go` 启发，为结构体生成 `Get` 方法【支持泛型!!!】，避免空指针引起的Panic
+受 `protoc-gen-go` 启发，为结构体字段生成 `GetXXX` 方法【支持泛型!!!】，避免空指针引起的Panic
 
-Generate `Get` method for structure (support generics !!!), inspired by `protoc-gen-go`, avoid Panic caused by nil pointer
+Generate `GetXXX` method for structure fields (support generics !!!), inspired by `protoc-gen-go`, avoid Panic caused by nil pointer
 
 ## 安装
 
@@ -35,10 +35,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/noble-gase/ne/steps"
+	"github.com/noble-gase/ne/stepkit"
 )
 
-//go:generate gg demo.go
+//go:generate gg --path=demo.go
 
 type Code int
 
@@ -54,7 +54,7 @@ type Demo[T any, E comparable] struct {
 	FieldCode      Code
 	FieldCtx       context.Context
 	FieldTime      time.Time
-	FieldStep      steps.Step
+	FieldStep      stepkit.Step
 	FieldGenT      T
 	FieldGenE      E
 }
@@ -69,7 +69,7 @@ package demo
 
 import (
 	"context"
-	"github.com/noble-gase/ne/steps"
+	"github.com/noble-gase/ne/stepkit"
 	"time"
 )
 
@@ -152,11 +152,11 @@ func (d *Demo[T, E]) GetFieldTime() time.Time {
 	return time.Time{}
 }
 
-func (d *Demo[T, E]) GetFieldStep() steps.Step {
+func (d *Demo[T, E]) GetFieldStep() stepkit.Step {
 	if d != nil {
 		return d.FieldStep
 	}
-	return steps.Step{}
+	return stepkit.Step{}
 }
 
 func (d *Demo[T, E]) GetFieldGenT() T {

@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +16,7 @@ import (
 
 	"github.com/noble-gase/og/internal"
 	"github.com/spf13/cobra"
+	"golang.org/x/tools/go/packages"
 )
 
 const suffix = "_getter.go"
@@ -118,7 +117,7 @@ func main() {
 		Use:     "gg",
 		Short:   "generate Get methods",
 		Long:    "generate Get methods for structs to avoid panic caused by nil pointer",
-		Version: "v0.1.1",
+		Version: "v0.2.0",
 		Example: internal.CmdExamples(
 			"👉 -- CLI --",
 			"gg --path .",
@@ -133,11 +132,9 @@ func main() {
 		Run: func(_ *cobra.Command, _ []string) {
 			var wg sync.WaitGroup
 			for _, path := range paths {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					genGetter(filepath.Clean(path))
-				}()
+				})
 			}
 			wg.Wait()
 		},
@@ -149,77 +146,74 @@ func main() {
 }
 
 func genGetter(path string) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		log.Fatalln("🐛 Abs path failed:", internal.FmtErr(err))
+	}
+
 	stat, err := os.Stat(path)
 	if err != nil {
 		log.Fatalln("🐛 Path stat failed:", internal.FmtErr(err))
 	}
 
-	var dir string
+	var pattern string
 	if stat.IsDir() {
-		dir = path
+		pattern = absPath
 	} else {
-		dir = filepath.Dir(path)
+		pattern = "file=" + absPath
 	}
 
 	fset := token.NewFileSet()
+	cfg := &packages.Config{
+		Mode: packages.NeedName | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo,
+		Fset: fset,
+		ParseFile: func(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
+			// 过滤掉 `_getter.go` 结尾的文件
+			if strings.HasSuffix(filename, suffix) {
+				return nil, nil
+			}
+			return parser.ParseFile(fset, filename, src, parser.AllErrors)
+		},
+	}
 
-	// Parse package files
-	pkgMap, err := parser.ParseDir(fset, dir, func(info fs.FileInfo) bool {
-		// 过滤掉 `_getter.go` 结尾的文件
-		if strings.HasSuffix(info.Name(), suffix) {
-			return false
-		}
-		return true
-	}, parser.AllErrors)
+	pkgs, err := packages.Load(cfg, pattern)
 	if err != nil {
-		log.Fatalln("🐛 Package file-parse failed:", internal.FmtErr(err))
+		log.Fatalln("🐛 Package load failed:", internal.FmtErr(err))
 	}
 
-	var files []*ast.File
-	nodeMap := make(map[string]*ast.File)
-	for _, pkg := range pkgMap {
-		for k, v := range pkg.Files {
-			files = append(files, v)
-			nodeMap[k] = v
-		}
-	}
-
-	// Type-checks a package and returns the resulting package object
-	info := &types.Info{
-		Types: make(map[ast.Expr]types.TypeAndValue),
-	}
-	conf := &types.Config{
-		Importer:                 importer.ForCompiler(fset, "source", nil),
-		IgnoreFuncBodies:         true,
-		DisableUnusedImportCheck: true,
-	}
-	if _, err = conf.Check("", fset, files, info); err != nil {
-		log.Fatalln("🐛 Package type-check failed:", internal.FmtErr(err))
-	}
-
-	// Generate file
+	// 单文件模式
 	if !stat.IsDir() {
-		if node, ok := nodeMap[path]; ok {
-			genFile(path, node, info)
+		for _, pkg := range pkgs {
+			for _, file := range pkg.Syntax {
+				if file != nil {
+					tf := fset.File(file.Pos())
+					if tf != nil && tf.Name() == absPath {
+						genFile(absPath, file, pkg.TypesInfo, pkg.PkgPath)
+						return
+					}
+				}
+			}
 		}
 		return
 	}
 
-	// Generate files
+	// 多文件模式
 	var wg sync.WaitGroup
-	for filename, node := range nodeMap {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			genFile(filename, node, info)
-		}()
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Syntax {
+			if file != nil {
+				if tf := fset.File(file.Pos()); tf != nil {
+					wg.Go(func() {
+						genFile(tf.Name(), file, pkg.TypesInfo, pkg.PkgPath)
+					})
+				}
+			}
+		}
 	}
 	wg.Wait()
 }
 
-func genFile(filename string, node *ast.File, info *types.Info) {
-	sourceFile := filepath.Clean(filename)
-
+func genFile(filename string, node *ast.File, info *types.Info, pkgPath string) {
 	gen := GenBody{
 		PkgName: node.Name.Name,
 		Imports: make(map[string]struct{}),
@@ -231,6 +225,9 @@ func genFile(filename string, node *ast.File, info *types.Info) {
 		// Find type declarations
 		ts, ok := n.(*ast.TypeSpec)
 		if !ok {
+			return true
+		}
+		if ts.Name == nil {
 			return true
 		}
 
@@ -255,7 +252,7 @@ func genFile(filename string, node *ast.File, info *types.Info) {
 		}
 
 		// Analyze struct
-		imports, data := analyzeStruct(info, ts, st, gt)
+		imports, data := analyzeStruct(info, ts, st, gt, pkgPath)
 		for path := range imports {
 			gen.Imports[path] = struct{}{}
 		}
@@ -276,19 +273,17 @@ func genFile(filename string, node *ast.File, info *types.Info) {
 	}
 
 	// Write to a file
-	outputFile := strings.ReplaceAll(sourceFile, ".go", suffix)
+	outputFile := strings.TrimSuffix(filename, ".go") + suffix
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0o755); err != nil {
 		log.Fatalln("🐛 Write to file failed:", internal.FmtErr(err))
 	}
 	fmt.Println("🐹 Generated code saved to", outputFile)
 }
 
-func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []GenType) (map[string]struct{}, Struct) {
+func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []GenType, pkgPath string) (map[string]struct{}, Struct) {
 	name := ts.Name.String()
-	receiver := "s"
-	if name != "<nil>" {
-		receiver = strings.ToLower(name[:1])
-	}
+	receiver := strings.ToLower(string([]rune(name)[0]))
+
 	// Generics identifier
 	if len(gt) != 0 {
 		name += "["
@@ -307,11 +302,11 @@ func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []
 		if len(field.Names) != 0 {
 			fieldType := info.TypeOf(field.Type)
 			// 包路径
-			for _, path := range analyzeImport(fieldType) {
+			for _, path := range analyzeImport(fieldType, pkgPath) {
 				imports[path] = struct{}{}
 			}
 			// 字段类型
-			typeName := analyzeTypeName(fieldType)
+			typeName := analyzeTypeName(fieldType, pkgPath)
 			for _, name := range field.Names {
 				fields = append(fields, Field{
 					Name:    name.Name,
@@ -329,51 +324,56 @@ func analyzeStruct(info *types.Info, ts *ast.TypeSpec, st *ast.StructType, gt []
 	}
 }
 
-func analyzeImport(fieldType types.Type) []string {
+func analyzeImport(fieldType types.Type, curPkgPath string) []string {
 	var imports []string
 	switch v := fieldType.(type) {
 	case *types.Alias:
-		if pkg := v.Obj().Pkg(); pkg != nil && len(pkg.Path()) != 0 {
+		pkg := v.Obj().Pkg()
+		if pkg != nil && len(pkg.Path()) != 0 && pkg.Path() != curPkgPath {
 			imports = append(imports, pkg.Path())
 		}
 	case *types.Named:
-		if pkg := v.Obj().Pkg(); pkg != nil && len(pkg.Path()) != 0 {
+		pkg := v.Obj().Pkg()
+		if pkg != nil && len(pkg.Path()) != 0 && pkg.Path() != curPkgPath {
 			imports = append(imports, pkg.Path())
 		}
 	case *types.Pointer:
-		imports = append(imports, analyzeImport(v.Elem())...)
+		imports = append(imports, analyzeImport(v.Elem(), curPkgPath)...)
 	case *types.Slice:
-		imports = append(imports, analyzeImport(v.Elem())...)
+		imports = append(imports, analyzeImport(v.Elem(), curPkgPath)...)
 	case *types.Map:
-		imports = append(imports, analyzeImport(v.Key())...)
-		imports = append(imports, analyzeImport(v.Elem())...)
+		imports = append(imports, analyzeImport(v.Key(), curPkgPath)...)
+		imports = append(imports, analyzeImport(v.Elem(), curPkgPath)...)
 	}
 	return imports
 }
 
-func analyzeTypeName(fieldType types.Type) string {
+func analyzeTypeName(fieldType types.Type, curPkgPath string) string {
 	var name string
 	switch v := fieldType.(type) {
 	case *types.Alias:
 		pkg := v.Obj().Pkg()
-		if pkg != nil && len(pkg.Path()) != 0 {
+		if pkg != nil && len(pkg.Path()) != 0 && pkg.Path() != curPkgPath {
 			name = fmt.Sprintf("%s.%s", pkg.Name(), v.Obj().Name()) // 只保留包名 + 类型名
 		} else {
 			name = v.Obj().Name()
 		}
 	case *types.Named:
 		pkg := v.Obj().Pkg()
-		if pkg != nil && len(pkg.Path()) != 0 {
+		if pkg != nil && len(pkg.Path()) != 0 && pkg.Path() != curPkgPath {
 			name = fmt.Sprintf("%s.%s", pkg.Name(), v.Obj().Name()) // 只保留包名 + 类型名
 		} else {
 			name = v.Obj().Name()
 		}
 	case *types.Pointer:
-		name = "*" + analyzeTypeName(v.Elem()) // 递归处理指针类型
+		name = "*" + analyzeTypeName(v.Elem(), curPkgPath) // 递归处理指针类型
 	case *types.Slice:
-		name = "[]" + analyzeTypeName(v.Elem()) // 递归处理切片类型
+		name = "[]" + analyzeTypeName(v.Elem(), curPkgPath) // 递归处理切片类型
 	case *types.Map:
-		name = fmt.Sprintf("map[%s]%s", analyzeTypeName(v.Key()), analyzeTypeName(v.Elem())) // 处理 map 类型
+		name = fmt.Sprintf("map[%s]%s",
+			analyzeTypeName(v.Key(), curPkgPath),
+			analyzeTypeName(v.Elem(), curPkgPath),
+		) // 处理 map 类型
 	default:
 		name = fieldType.String() // 其他类型（基本类型等）
 	}
