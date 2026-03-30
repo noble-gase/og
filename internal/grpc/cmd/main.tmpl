@@ -1,7 +1,16 @@
 package main
 
-import "{{.Module}}/internal/{{.AppPkg}}/cmd"
+import (
+	"fmt"
+
+	"{{.Module}}/internal/{{.AppPkg}}/cmd"
+
+	"github.com/common-nighthawk/go-figure"
+)
 
 func main() {
+	figure.NewFigure("{{.AppName}}", "", true).Print()
+	fmt.Println()
+
 	cmd.Init()
 }
