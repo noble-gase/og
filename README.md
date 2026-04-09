@@ -28,7 +28,7 @@ go install github.com/noble-gase/og/cmd/protoc-gen-og@latest
 
 ## gg
 
-受 `protoc-gen-go` 启发，为结构体字段生成 `Get` 方法【支持泛型!!!】，避免空指针引起的Panic
+受 `protoc-gen-go` 启发，为结构体字段生成 `GetXXX` 方法【支持泛型!!!】，避免空指针引起的Panic
 
 ```shell
 go install github.com/noble-gase/og/cmd/gg@latest
