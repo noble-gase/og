@@ -21,10 +21,10 @@ service GreeterService {
 
 // The request message containing the user's name
 message HelloRequest {
-  string name = 1 [(buf.validate.field).required = true];
+  string name = 1 [(buf.validate.field).required = true]; // @gotags: valid:"required"
 }
 
 // The response message containing the greetings
 message HelloResponse {
-  string message = 1;
+  string message = 1; // @gotags: json:"message"
 }

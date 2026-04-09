@@ -16,19 +16,23 @@ import (
 )
 
 const (
-	version = "v0.3.0"
+	version = "v0.4.0"
 	suffix  = "_http.pb.go"
 )
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
+
 	flag.Parse()
+
 	if *showVersion {
 		fmt.Printf("protoc-gen-og %s\n", version)
 		return
 	}
 
 	var flags flag.FlagSet
+
+	protoValidate := flags.Bool("proto_validate", false, "generate request validation using protovalidate")
 
 	protogen.Options{
 		ParamFunc: flags.Set,
@@ -38,7 +42,7 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			genServiceFile(p, f)
+			genServiceFile(p, f, *protoValidate)
 			genCodeFile(p, f)
 			genCodeJson(p, f)
 		}
@@ -72,7 +76,7 @@ func protocVersion(p *protogen.Plugin) string {
 }
 
 // generateFile generates a `xxx_http.pb.go` file containing HTTP service definitions.
-func genServiceFile(p *protogen.Plugin, f *protogen.File) {
+func genServiceFile(p *protogen.Plugin, f *protogen.File, pv bool) {
 	if len(f.Services) == 0 {
 		return
 	}
@@ -93,17 +97,17 @@ func genServiceFile(p *protogen.Plugin, f *protogen.File) {
 	gf.P("package ", f.GoPackageName)
 	gf.P()
 
-	genFileContent(f, gf)
+	genFileContent(f, gf, pv)
 }
 
 // generateFileContent generates the HTTP service definitions, excluding the package statement.
-func genFileContent(f *protogen.File, gf *protogen.GeneratedFile) {
+func genFileContent(f *protogen.File, gf *protogen.GeneratedFile, pv bool) {
 	for _, service := range f.Services {
-		genService(gf, service)
+		genService(gf, service, pv)
 	}
 }
 
-func genService(gf *protogen.GeneratedFile, service *protogen.Service) {
+func genService(gf *protogen.GeneratedFile, service *protogen.Service, pv bool) {
 	serverType := service.GoName + "HttpServer"
 	// Server interface
 	genServerInterface(gf, service, serverType)
@@ -114,7 +118,7 @@ func genService(gf *protogen.GeneratedFile, service *protogen.Service) {
 	// Register HttpServer
 	genServerRegister(gf, service, serverType)
 	// Register HttpServer methods
-	genServerMethods(gf, service, serverType)
+	genServerMethods(gf, service, serverType, pv)
 	gf.P()
 	gf.P("// --------------------------------------------- http client ---------------------------------------------")
 	gf.P()
@@ -195,7 +199,7 @@ func genServerRegister(gf *protogen.GeneratedFile, service *protogen.Service, se
 	gf.P("}")
 }
 
-func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string, pv bool) {
 	for _, m := range service.Methods {
 		gf.P()
 		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
@@ -204,7 +208,11 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("ctx := r.Context()")
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
-		gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req); err != nil {")
+		if pv {
+			gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req); err != nil {")
+		} else {
+			gf.P("if err := ", helperPkg.Ident("BindJSON"), "(r, req); err != nil {")
+		}
 		gf.P(resultPkg.Ident("Err"), "(", codekitPkg.Ident("FromError"), "(err)).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")

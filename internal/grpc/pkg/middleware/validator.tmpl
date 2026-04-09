@@ -12,8 +12,10 @@ import (
 )
 
 func Validator(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	msg, ok := req.(proto.Message)
-	if ok {
+    // if err := validkit.ValidateStruct(req); err != nil {
+	// 	return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
+	// }
+	if msg, ok := req.(proto.Message); ok {
 		if err := protokit.Validate(msg); err != nil {
 			return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
 		}

@@ -12,6 +12,9 @@ go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@lat
 # buf
 go install github.com/bufbuild/buf/cmd/buf@latest
 
+# tag
+go install github.com/favadi/protoc-go-inject-tag@latest
+
 # swagger
 go install github.com/go-swagger/go-swagger/cmd/swagger@latest
 go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest

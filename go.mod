@@ -6,7 +6,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/mod v0.34.0
 	golang.org/x/tools v0.43.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260319201613-d00831a3d3e7
+	google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d
 	google.golang.org/protobuf v1.36.11
 )
 

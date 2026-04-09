@@ -19,6 +19,9 @@ brew install protobuf
 
 # 安装依赖工具
 sh install.sh
+
+# Generate API
+sh genapi.sh
 ```
 
 #### 运行
