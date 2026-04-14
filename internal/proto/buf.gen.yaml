@@ -15,7 +15,6 @@ plugins:
     out: api
     opt:
       - paths=source_relative
-      - proto_validate=true
   - local: protoc-gen-openapiv2
     out: api
     strategy: all

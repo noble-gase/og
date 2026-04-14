@@ -37,6 +37,7 @@
         "parameters": [
           {
             "name": "name",
+            "description": "@gotags: valid:\"required\"",
             "in": "query",
             "required": false,
             "type": "string"
@@ -84,7 +85,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "title": "@gotags: valid:\"required\""
         }
       },
       "title": "The request message containing the user's name"
@@ -93,7 +95,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "title": "@gotags: json:\"message\""
         }
       },
       "title": "The response message containing the greetings"

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	version = "v0.4.0"
+	version = "v0.5.0"
 	suffix  = "_http.pb.go"
 )
 
@@ -115,9 +116,9 @@ func genService(gf *protogen.GeneratedFile, service *protogen.Service, pv bool) 
 	// Unimplemented HttpServer
 	genServerUnimplement(gf, service, serverType)
 	gf.P()
-	// Register HttpServer
-	genServerRegister(gf, service, serverType)
-	// Register HttpServer methods
+	// Register Router
+	genRouterRegister(gf, service, serverType)
+	// HttpServer Methods
 	genServerMethods(gf, service, serverType, pv)
 	gf.P()
 	gf.P("// --------------------------------------------- http client ---------------------------------------------")
@@ -134,7 +135,7 @@ func genService(gf *protogen.GeneratedFile, service *protogen.Service, pv bool) 
 	gf.P()
 }
 
-// Method(ctx context.Context, in *MethodReq) (*MethodResp, error)
+// Method(ctx context.Context, in *XXXRequest) (*XXXResponse, error)
 func serverSignature(gf *protogen.GeneratedFile, method *protogen.Method) string {
 	var reqArgs []string
 	// params
@@ -148,7 +149,7 @@ func serverSignature(gf *protogen.GeneratedFile, method *protogen.Method) string
 func genServerInterface(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	gf.P("// ", serviceType, " is the server API definition for ", service.GoName)
 	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
-		gf.P("//")
+		gf.P("// ", service.GoName, " is deprecated.")
 	}
 	gf.AnnotateSymbol(serviceType, protogen.Annotation{Location: service.Location})
 	// type XXXHttpServer interface {
@@ -175,25 +176,22 @@ func genServerUnimplement(gf *protogen.GeneratedFile, service *protogen.Service,
 	gf.P("type Unimplemented", serviceType, " struct{}")
 	for _, m := range service.Methods {
 		gf.P()
-		gf.P("func (Unimplemented", serviceType, ") ", m.GoName, "(context.Context, *", m.Input.GoIdent, ") (*", m.Output.GoIdent, ", error) {")
-		gf.P(`return nil, `, errorPkg.Ident("New"), `("method `, m.GoName, ` not implemented")`)
+		gf.P("func (Unimplemented", serviceType, ")", m.GoName, "(context.Context, *", m.Input.GoIdent, ") (*", m.Output.GoIdent, ", error) {")
+		gf.P(`return nil,`, errorPkg.Ident("New"), `("method `, m.GoName, ` not implemented")`)
 		gf.P("}")
 	}
 }
 
-func genServerRegister(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+func genRouterRegister(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	gf.P("func Register", serviceType, "(r ", chiPkg.Ident("Router"), ", svc ", serviceType, ") {")
-	for _, m := range service.Methods {
-		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
-		if ok && rule != nil {
-			method, path := getHttpRouter(rule)
-			gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
-			gf.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
-			// additional bindings
-			for _, bind := range rule.GetAdditionalBindings() {
-				method, path := getHttpRouter(bind)
-				gf.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
-			}
+	for _, method := range service.Methods {
+		comment := strings.TrimPrefix(method.Comments.Leading.String(), "//")
+		comment = strings.TrimSpace(strings.TrimSuffix(comment, "\n"))
+
+		routers := getHttpRouters(method)
+		for _, router := range routers {
+			gf.P("// ", router.Method, " | ", comment)
+			gf.P(`r.Method("`, router.Method, `","`, router.Path, `", _`, service.GoName, "_", method.GoName, `(svc))`)
 		}
 	}
 	gf.P("}")
@@ -206,16 +204,14 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("func _", service.GoName, "_", m.GoName, "(svc ", serviceType, ") http.HandlerFunc {")
 		gf.P("return func(w ", httpPkg.Ident("ResponseWriter"), ", r *", httpPkg.Ident("Request"), ") {")
 		gf.P("ctx := r.Context()")
+		gf.P()
 		gf.P("// parse request")
 		gf.P("req := new(", m.Input.GoIdent, ")")
-		if pv {
-			gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req); err != nil {")
-		} else {
-			gf.P("if err := ", helperPkg.Ident("BindJSON"), "(r, req); err != nil {")
-		}
+		gf.P("if err := ", helperPkg.Ident("BindProto"), "(r, req, ", pv, "); err != nil {")
 		gf.P(resultPkg.Ident("Err"), "(", codekitPkg.Ident("FromError"), "(err)).JSON(w, r)")
 		gf.P("return")
 		gf.P("}")
+		gf.P()
 		gf.P("// call service")
 		gf.P("resp, err := svc.", m.GoName, "(ctx, req)")
 		gf.P("if err != nil {")
@@ -228,13 +224,13 @@ func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 	}
 }
 
-// Method(ctx context.Context, in *MethodReq, opts ...protokit.RequestOption) (*MethodResp, error)
+// Method(ctx context.Context, in *XXXRequest, header ...http.Header) (*MethodResp, error)
 func clientSignature(gf *protogen.GeneratedFile, method *protogen.Method) string {
 	var reqArgs []string
 	// params
 	reqArgs = append(reqArgs, "ctx "+gf.QualifiedGoIdent(ctxPkg.Ident("Context")))
 	reqArgs = append(reqArgs, "in *"+gf.QualifiedGoIdent(method.Input.GoIdent))
-	reqArgs = append(reqArgs, "opts ..."+gf.QualifiedGoIdent(protokitPkg.Ident("RequestOption")))
+	reqArgs = append(reqArgs, "header ..."+gf.QualifiedGoIdent(httpPkg.Ident("Header")))
 	// return
 	resp := "(*" + gf.QualifiedGoIdent(method.Output.GoIdent) + ", error)"
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + resp
@@ -243,7 +239,7 @@ func clientSignature(gf *protogen.GeneratedFile, method *protogen.Method) string
 func genClientInterface(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	gf.P("// ", serviceType, " is the client API definition for ", service.GoName)
 	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
-		gf.P("//")
+		gf.P("// ", service.GoName, " is deprecated.")
 	}
 	gf.AnnotateSymbol(serviceType, protogen.Annotation{Location: service.Location})
 	// type XXXHttpClient interface {
@@ -266,78 +262,124 @@ func genClientNew(gf *protogen.GeneratedFile, _ *protogen.Service, serviceType s
 	gf.P("client *", restyPkg.Ident("Client"))
 	gf.P("}")
 	gf.P()
-	gf.P("// New", serviceType, " returns a client for ", serviceType, ". Typically requires WithBaseURL")
-	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", opts ...", protokitPkg.Ident("ClientOption"), ") ", serviceType, " {")
+	gf.P("// New", serviceType, " returns a client for ", serviceType)
+	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", baseURL string)", serviceType, "{")
 	gf.P("c := ", restyPkg.Ident("NewWithClient"), "(hc)")
-	gf.P("for _, f := range opts {")
-	gf.P("f(c)")
-	gf.P("}")
+	gf.P("c.SetBaseURL(baseURL)")
 	gf.P("return &", unexport(serviceType), "{client: c}")
 	gf.P("}")
 }
 
 func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
-	for _, m := range service.Methods {
-		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
-		if !ok || rule == nil {
+	for _, method := range service.Methods {
+		routers := getHttpRouters(method)
+		if len(routers) == 0 {
 			continue
 		}
-
-		method, path := getHttpRouter(rule)
-		isGetMethod := false
-		if strings.ToUpper(method) == http.MethodGet {
-			isGetMethod = true
-		}
+		router := routers[0]
 
 		gf.P()
-		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
-		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protokitPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
-		if isGetMethod {
-			gf.P("req := c.client.R().SetContext(ctx).SetQueryParamsFromValues(", protokitPkg.Ident("MessageToValues"), "(in))")
+		gf.P(strings.TrimSuffix(method.Comments.Leading.String(), "\n"))
+		gf.P("func (c *", unexport(serviceType), ") ", method.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(method.Input.GoIdent), ", header ...", httpPkg.Ident("Header"), ") (*"+gf.QualifiedGoIdent(method.Output.GoIdent)+", error) {")
+		gf.P("ret := new(", protokitPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(method.Output.GoIdent), "])")
+		gf.P()
+		gf.P("// build request")
+		if router.Method == http.MethodPost || router.Method == http.MethodPut || router.Method == http.MethodPatch {
+			gf.P("req := c.client.R().SetContext(ctx).SetBody(in).SetResult(ret)")
 		} else {
-			gf.P("req := c.client.R().SetContext(ctx)")
+			gf.P("req := c.client.R().SetContext(ctx).SetQueryParamsFromValues(", protokitPkg.Ident("MessageToValues"), "(in)).SetResult(ret)")
 		}
-		gf.P("for _, f := range opts {")
-		gf.P("f(req)")
+		gf.P("if len(header) != 0 {")
+		gf.P("req.SetHeaderMultiValues(header[0])")
 		gf.P("}")
-		if !isGetMethod {
-			gf.P("// set request body")
-			gf.P("switch ", helperPkg.Ident("ContentType"), "(req.Header) {")
-			gf.P("case ", helperPkg.Ident("ContentForm"), ",", helperPkg.Ident("ContentMultipartForm"), ":")
-			gf.P("req.SetFormDataFromValues(", protokitPkg.Ident("MessageToValues"), "(in))")
-			gf.P("default:")
-			gf.P("req.SetHeader(", helperPkg.Ident("HeaderContentType"), ", ", helperPkg.Ident("ContentJSON"), ").SetBody(in)")
-			gf.P("}")
-		}
+		gf.P()
 		gf.P("// send request")
-		gf.P("ret := new(", protokitPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
-		gf.P("if _, err := req.SetResult(ret).", method, `("`, path, `"); err != nil {`)
+		gf.P(`resp, err := req.Execute("`, router.Method, `","`, router.Path, `")`)
+		gf.P("if err != nil {")
 		gf.P("return nil, err")
 		gf.P("}")
-		gf.P("if ret.Code != 0 {")
-		gf.P("return nil, ", codekitPkg.Ident("New"), "(ret.Code, ret.Msg)")
+		gf.P("if resp.StatusCode() !=", httpPkg.Ident("StatusOK"), "{")
+		gf.P("return nil,", errorPkg.Ident("New"), "(resp.Status())")
+		gf.P("}")
+		gf.P("if err = ret.Error(0); err != nil {")
+		gf.P("return nil, err")
 		gf.P("}")
 		gf.P("return ret.Data, nil")
 		gf.P("}")
 	}
 }
 
-func getHttpRouter(rule *annotations.HttpRule) (string, string) {
-	switch v := rule.Pattern.(type) {
-	case *annotations.HttpRule_Get:
-		return "Get", v.Get
-	case *annotations.HttpRule_Put:
-		return "Put", v.Put
-	case *annotations.HttpRule_Post:
-		return "Post", v.Post
-	case *annotations.HttpRule_Delete:
-		return "Delete", v.Delete
-	case *annotations.HttpRule_Patch:
-		return "Patch", v.Patch
-	case *annotations.HttpRule_Custom:
-		return v.Custom.GetKind(), v.Custom.GetPath()
+type HttpRouter struct {
+	Method   string
+	Path     string
+	Priority int
+}
+
+func getHttpRouters(method *protogen.Method) []*HttpRouter {
+	rule, ok := proto.GetExtension(method.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
+	if !ok || rule == nil {
+		return nil
 	}
-	return "Unknown", ""
+
+	var routers []*HttpRouter
+	if router := parseHttpRouter(rule); router != nil {
+		routers = append(routers, router)
+	}
+
+	// additional bindings
+	for _, ab := range rule.GetAdditionalBindings() {
+		if router := parseHttpRouter(ab); router != nil {
+			routers = append(routers, router)
+		}
+	}
+
+	sort.SliceStable(routers, func(i, j int) bool {
+		return routers[i].Priority < routers[j].Priority
+	})
+	return routers
+}
+
+func parseHttpRouter(rule *annotations.HttpRule) *HttpRouter {
+	switch v := rule.Pattern.(type) {
+	case *annotations.HttpRule_Post:
+		return &HttpRouter{
+			Method:   http.MethodPost,
+			Path:     v.Post,
+			Priority: 0,
+		}
+	case *annotations.HttpRule_Put:
+		return &HttpRouter{
+			Method:   http.MethodPut,
+			Path:     v.Put,
+			Priority: 1,
+		}
+	case *annotations.HttpRule_Patch:
+		return &HttpRouter{
+			Method:   http.MethodPatch,
+			Path:     v.Patch,
+			Priority: 2,
+		}
+	case *annotations.HttpRule_Get:
+		return &HttpRouter{
+			Method:   http.MethodGet,
+			Path:     v.Get,
+			Priority: 3,
+		}
+	case *annotations.HttpRule_Delete:
+		return &HttpRouter{
+			Method:   http.MethodDelete,
+			Path:     v.Delete,
+			Priority: 4,
+		}
+	case *annotations.HttpRule_Custom:
+		return &HttpRouter{
+			Method:   strings.ToUpper(v.Custom.GetKind()),
+			Path:     v.Custom.GetPath(),
+			Priority: 5,
+		}
+	default:
+		return nil
+	}
 }
 
 // genCodeFile generates a `code.pb.go` file containing HTTP service definitions.
@@ -372,16 +414,15 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 		for _, v := range e.Values {
 			msg := strings.ToLower(string(v.Desc.Name()))
 			if comment := string(v.Comments.Trailing); len(comment) != 0 {
-				arr := strings.Split(comment, ";")
-				for _, s := range arr {
-					if index := strings.Index(s, "="); index != -1 {
-						msg = strings.TrimSpace(s[index+1:])
+				for seq := range strings.SplitSeq(comment, ";") {
+					if _, after, found := strings.Cut(seq, "="); found {
+						msg = strings.TrimSpace(after)
 						break
 					}
 				}
 			}
 			name := case2camel(string(v.Desc.Name()))
-			gf.P(e.Desc.Name(), "_", name, " = ", codekitPkg.Ident("New"), "(int(", e.Desc.Name(), "_", v.Desc.Name(), `), "`, msg, `")`)
+			gf.P(e.Desc.Name(), "_", name, "=", codekitPkg.Ident("New"), "(int(", e.Desc.Name(), "_", v.Desc.Name(), `), "`, msg, `")`)
 		}
 		gf.P()
 	}
@@ -409,11 +450,10 @@ func genCodeJson(p *protogen.Plugin, f *protogen.File) {
 		for _, v := range e.Values {
 			key := strconv.Itoa(int(v.Desc.Number()))
 			if comment := string(v.Comments.Trailing); len(comment) != 0 {
-				arr := strings.Split(comment, ";")
-				for _, s := range arr {
-					if index := strings.Index(s, "="); index != -1 {
-						lang := strings.TrimSpace(s[:index])
-						msg := strings.TrimSpace(s[index+1:])
+				for seq := range strings.SplitSeq(comment, ";") {
+					if before, after, found := strings.Cut(seq, "="); found {
+						lang := strings.TrimSpace(before)
+						msg := strings.TrimSpace(after)
 						if _, ok := m[lang]; !ok {
 							m[lang] = make(map[string]string)
 						}

@@ -17,6 +17,36 @@
   ],
   "paths": {
     "/v1/greeter": {
+      "get": {
+        "summary": "Sends a greeting",
+        "operationId": "GreeterService_SayHello2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiHelloResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "@gotags: valid:\"required\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "api.GreeterService"
+        ]
+      },
       "post": {
         "summary": "Sends a greeting",
         "operationId": "GreeterService_SayHello",
@@ -55,7 +85,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "title": "@gotags: valid:\"required\""
         }
       },
       "title": "The request message containing the user's name"
@@ -64,7 +95,8 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string"
+          "type": "string",
+          "title": "@gotags: json:\"message\""
         }
       },
       "title": "The response message containing the greetings"

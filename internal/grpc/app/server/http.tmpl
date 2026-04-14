@@ -24,13 +24,13 @@ func NewHttpServer(ctx context.Context, conn *grpc.ClientConn) *http.Server {
 	mux := runtime.NewServeMux(
 		runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(conn)),
 		runtime.WithIncomingHeaderMatcher(func(s string) (string, bool) {
-			if v, ok := runtime.DefaultHeaderMatcher(s); ok {
-				return v, true
+			if strings.ToLower(s) == helper.XTraceId {
+				return s, true
 			}
-			return strings.ToLower(s), true
+			return runtime.DefaultHeaderMatcher(s)
 		}),
 		runtime.WithOutgoingHeaderMatcher(func(s string) (string, bool) {
-			if s == helper.XTraceId {
+			if strings.ToLower(s) == helper.XTraceId {
 				return s, true
 			}
 			return runtime.MetadataHeaderPrefix + s, true

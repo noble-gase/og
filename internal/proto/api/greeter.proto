@@ -1,11 +1,10 @@
 syntax = "proto3";
 
-option go_package = "{{.Module}}/{{.ApiPkg}}";
-
 package {{.ApiName}};
 
 import "google/api/annotations.proto";
-import "buf/validate/validate.proto";
+
+option go_package = "{{.Module}}/{{.ApiPkg}}";
 
 // Here is the overall greeting service definition where we define all our endpoints
 service GreeterService {
@@ -13,7 +12,7 @@ service GreeterService {
   rpc SayHello(HelloRequest) returns (HelloResponse) {
     option (google.api.http) = {
       post: "/v1/greeter"
-      additional_bindings{ get: "/v1/greeter" }
+      additional_bindings: {get: "/v1/greeter"}
       body: "*"
     };
   }
@@ -21,7 +20,7 @@ service GreeterService {
 
 // The request message containing the user's name
 message HelloRequest {
-  string name = 1 [(buf.validate.field).required = true]; // @gotags: valid:"required"
+  string name = 1; // @gotags: valid:"required"
 }
 
 // The response message containing the greetings

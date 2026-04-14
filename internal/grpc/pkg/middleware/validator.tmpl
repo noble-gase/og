@@ -6,19 +6,13 @@ import (
 	"{{.Module}}/pkg/code"
 	"{{.Module}}/pkg/status"
 
-	"github.com/noble-gase/ne/protokit"
+	"github.com/noble-gase/ne/validkit"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 func Validator(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-    // if err := validkit.ValidateStruct(req); err != nil {
-	// 	return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
-	// }
-	if msg, ok := req.(proto.Message); ok {
-		if err := protokit.Validate(msg); err != nil {
-			return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
-		}
+	if err := validkit.ValidateStruct(req); err != nil {
+		return nil, status.Error(ctx, code.ErrParams.WithMsg(err.Error()))
 	}
 	return handler(ctx, req)
 }
