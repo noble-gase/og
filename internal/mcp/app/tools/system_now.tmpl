@@ -10,7 +10,11 @@ import (
 )
 
 func SystemNowTool() mcp.Tool {
-	description := `获取当前服务器时间（时区：Asia/Shanghai），在涉及时间计算时（如'最近N分钟/小时/天/周/月/年'）必须先调用此工具获取当前时间。`
+	description := `获取当前服务器时间。
+
+规则说明：
+	- 时区：Asia/Shanghai
+	- 涉及时间计算时（如：最近N分钟/小时/天/周/月/年）必须先调用此工具获取当前时间`
 
 	return mcp.NewTool("system_now",
 		mcp.WithDescription(description),
