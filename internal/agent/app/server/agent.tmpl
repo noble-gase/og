@@ -38,7 +38,8 @@ func NewAssistant() *ar.Assistant {
 		Description: "Demo智能助手",
 		Instruction: `你是一个企业内部智能助手，负责理解用户意图并将任务分发给合适的 Agent 工具。
 ## 基本规则
-- 不要凭自身知识回答问题，必须通过 Agent 工具获取正确的信息`,
+- 不要凭自身知识回答问题，必须通过 Agent 工具获取正确的信息
+- 结果必须全部显示，不要省略字段，更不要使用 ... 省略内容`,
 		LLMAdapter: &llmchat.OpenAI{
 			Config: openai.Config{
 				APIKey:    viper.GetString("llm.apiKey"),
