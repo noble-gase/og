@@ -17,7 +17,7 @@ func main() {
 		Use:     "og",
 		Short:   "project scaffold",
 		Long:    "project scaffold, quickly create a Go project",
-		Version: "v0.11.2",
+		Version: "v0.11.3",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
