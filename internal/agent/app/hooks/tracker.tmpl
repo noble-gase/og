@@ -1,0 +1,217 @@
+package hooks
+
+import (
+	"log/slog"
+	"sync"
+
+	"{{.Module}}/pkg/log"
+
+	"github.com/noble-gase/ne/helper"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/model"
+	"google.golang.org/adk/tool"
+	"google.golang.org/genai"
+)
+
+// --------- tracker factory ---------
+
+type TrackerFactory struct {
+	mu sync.RWMutex
+
+	Trackers map[string]*ChatTracker `json:"trackers"` // key = trace_id
+}
+
+func (f *TrackerFactory) get(ctx agent.CallbackContext) *ChatTracker {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	return f.Trackers[helper.MDTraceIdFromCtx(ctx)]
+}
+
+func (f *TrackerFactory) add(ctx agent.CallbackContext) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	traceId := helper.MDTraceIdFromCtx(ctx)
+	agentName := ctx.AgentName()
+
+	f.Trackers[traceId] = &ChatTracker{
+		UserId:    ctx.UserID(),
+		SessionId: ctx.SessionID(),
+		Agents: map[string]*AgentTracker{
+			agentName: {
+				Name:   agentName,
+				InvoId: ctx.InvocationID(),
+				Tokens: &TokenUsage{},
+			},
+		},
+	}
+}
+
+func (f *TrackerFactory) delete(ctx agent.CallbackContext) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	delete(f.Trackers, helper.MDTraceIdFromCtx(ctx))
+}
+
+func (f *TrackerFactory) BeforeAgent(ctx agent.CallbackContext) (*genai.Content, error) {
+	it := f.get(ctx)
+	if it != nil {
+		it.add(ctx)
+	} else {
+		f.add(ctx)
+	}
+	return nil, nil
+}
+
+func (f *TrackerFactory) AfterTool(ctx tool.Context, tool tool.Tool, args, result map[string]any, err error) (map[string]any, error) {
+	it := f.get(ctx)
+	if it != nil {
+		it.AfterTool(ctx, tool, args, result, err)
+	}
+	return nil, nil
+}
+
+func (f *TrackerFactory) AfterModel(ctx agent.CallbackContext, resp *model.LLMResponse, err error) (*model.LLMResponse, error) {
+	it := f.get(ctx)
+	if it != nil {
+		it.AfterModel(ctx, resp, err)
+	}
+	return nil, nil
+}
+
+func (f *TrackerFactory) AfterAgent(ctx agent.CallbackContext) (*genai.Content, error) {
+	it := f.get(ctx)
+	if it == nil || !it.AfterAgent(ctx) {
+		return nil, nil
+	}
+
+	// 全部完成，清理记录
+	f.delete(ctx)
+
+	return nil, nil
+}
+
+// --------- ChatTracker tracker ---------
+
+type ChatTracker struct {
+	mu sync.Mutex
+
+	UserId    string `json:"user_id"`
+	SessionId string `json:"session_id"`
+
+	Agents map[string]*AgentTracker `json:"agents"` // key = agent_name
+}
+
+func (t *ChatTracker) add(ctx agent.CallbackContext) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	name := ctx.AgentName()
+
+	t.Agents[name] = &AgentTracker{
+		Name:   name,
+		InvoId: ctx.InvocationID(),
+		Tokens: &TokenUsage{},
+	}
+}
+
+func (t *ChatTracker) AfterTool(ctx tool.Context, tool tool.Tool, args, result map[string]any, err error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	agent := t.Agents[ctx.AgentName()]
+	if agent == nil {
+		return
+	}
+	agent.Tools = append(agent.Tools, &ToolCall{
+		Name:  tool.Name(),
+		Args:  args,
+		Error: err,
+	})
+}
+
+func (t *ChatTracker) AfterModel(ctx agent.CallbackContext, resp *model.LLMResponse, err error) {
+	if resp == nil || resp.UsageMetadata == nil {
+		return
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	agent := t.Agents[ctx.AgentName()]
+	if agent == nil {
+		return
+	}
+	agent.Tokens.Input += int(resp.UsageMetadata.PromptTokenCount)
+	agent.Tokens.Output += int(resp.UsageMetadata.TotalTokenCount - resp.UsageMetadata.PromptTokenCount)
+	agent.Tokens.Total += int(resp.UsageMetadata.TotalTokenCount)
+}
+
+func (t *ChatTracker) AfterAgent(ctx agent.CallbackContext) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	agent := t.Agents[ctx.AgentName()]
+	if agent == nil {
+		return false
+	}
+	agent.done = true
+
+	for _, v := range t.Agents {
+		if !v.done {
+			return false
+		}
+	}
+
+	// 全部完成
+	tokens := &TokenUsage{}
+	trace := make([]*AgentTracker, 0, len(t.Agents))
+	for _, v := range t.Agents {
+		trace = append(trace, v)
+
+		// 汇总所有 Agent 的 Token 使用情况
+		tokens.Input += v.Tokens.Input
+		tokens.Output += v.Tokens.Output
+		tokens.Total += v.Tokens.Total
+	}
+
+	log.Info(ctx, "tracker",
+		slog.String("user_id", t.UserId),
+		slog.String("session_id", t.SessionId),
+		slog.Any("tokens", tokens),
+		slog.Any("trace", trace),
+	)
+	return true
+}
+
+type AgentTracker struct {
+	Name   string      `json:"name"`
+	InvoId string      `json:"invo_id"`
+	Tools  []*ToolCall `json:"tools,omitempty"`
+	Tokens *TokenUsage `json:"tokens"`
+
+	done bool // 标记是否完成
+}
+
+type ToolCall struct {
+	Name  string         `json:"name"`
+	Args  map[string]any `json:"args"`
+	Error error          `json:"error,omitempty"`
+}
+
+type TokenUsage struct {
+	Input  int `json:"input"`
+	Output int `json:"output"`
+	Total  int `json:"total"`
+}
+
+func NewTrackerFactory() *TrackerFactory {
+	return &TrackerFactory{
+		Trackers: make(map[string]*ChatTracker),
+	}
+}
+
+var Tracker = NewTrackerFactory()
+

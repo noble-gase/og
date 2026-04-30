@@ -10,6 +10,7 @@ import (
 	"github.com/noble-gase/ar/llmchat"
 	"github.com/noble-gase/ar/model/openai"
 	"github.com/spf13/viper"
+	adk_agent "google.golang.org/adk/agent"
 	"google.golang.org/adk/agent/llmagent"
 	"gorm.io/driver/mysql"
 )
@@ -46,9 +47,22 @@ func NewAssistant() *ar.Assistant {
 			},
 		},
 		Tools: make([]llmchat.AgentBuilder, 0, len(mcp.List)),
+		AgentHooks: llmchat.AgentCallback{
+			Before: []adk_agent.BeforeAgentCallback{
+				hooks.Tracker.BeforeAgent,
+			},
+			After: []adk_agent.AfterAgentCallback{
+				hooks.Tracker.AfterAgent,
+			},
+		},
+		ToolHooks: llmchat.ToolCallback{
+			After: []llmagent.AfterToolCallback{
+				hooks.Tracker.AfterTool,
+			},
+		},
 		ModelHooks: llmchat.ModelCallback{
 			After: []llmagent.AfterModelCallback{
-				hooks.TokenUsage,
+				hooks.Tracker.AfterModel,
 			},
 		},
 	}
@@ -58,9 +72,22 @@ func NewAssistant() *ar.Assistant {
 			Endpoints:   []string{v.Endpoint},
 			Description: v.Description,
 			Instruction: v.Instruction,
+			AgentHooks: llmchat.AgentCallback{
+				Before: []adk_agent.BeforeAgentCallback{
+					hooks.Tracker.BeforeAgent,
+				},
+				After: []adk_agent.AfterAgentCallback{
+					hooks.Tracker.AfterAgent,
+				},
+			},
+			ToolHooks: llmchat.ToolCallback{
+				After: []llmagent.AfterToolCallback{
+					hooks.Tracker.AfterTool,
+				},
+			},
 			ModelHooks: llmchat.ModelCallback{
 				After: []llmagent.AfterModelCallback{
-					hooks.TokenUsage,
+					hooks.Tracker.AfterModel,
 				},
 			},
 		})
@@ -87,3 +114,4 @@ func NewAssistant() *ar.Assistant {
 	}
 	return assistant
 }
+
